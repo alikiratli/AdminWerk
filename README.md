@@ -1,4 +1,9 @@
-# AdminWerk — Windows Administration Suite
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/bilder/logo-wortmarke-dunkel.png">
+    <img alt="AdminWerk — Windows Administration Suite" src="docs/bilder/logo-wortmarke-hell.png" width="540">
+  </picture>
+</p>
 
 Eine WPF-Anwendung, die geprüfte PowerShell-Skripte für die tägliche Windows-Administration
 bereitstellt. Kategorisiert, durchsuchbar, mit Syntaxhervorhebung — und mit einem Klick in der
@@ -26,7 +31,7 @@ den Inhalt vorher gelesen hat.
 | Funktion | Beschreibung |
 |---|---|
 | **Kategorien** | System, Netzwerk, Konten und Security als eigene Bereiche, dazu eine Gesamtansicht |
-| **Favoriten** | Häufig gebrauchte Skripte mit dem Stern markieren (oder `Strg+D`) und über den eigenen Reiter „Favoriten" wiederfinden |
+| **Favoriten** | Häufig gebrauchte Skripte mit dem Stern markieren (oder `Strg+D`) und über den eigenen Reiter „Favoriten“ wiederfinden |
 | **Volltextsuche** | Durchsucht Titel, Beschreibung, Schlagwörter **und** den Skriptinhalt |
 | **Syntaxhervorhebung** | PowerShell-Quelltext farblich aufbereitet (Kommentare, Cmdlets, Variablen, Parameter) |
 | **Zwischenablage** | Das vollständige Skript mit einem Klick kopieren |
@@ -176,7 +181,9 @@ AdminWerk/
 ├── README.md
 ├── docs/
 │   ├── FORTSCHRITT.md          Entwicklungstagebuch
-│   └── bilder/
+│   └── bilder/                 Bildmarke und Bildschirmfotos
+├── tools/
+│   └── logo-erzeugen.py        erzeugt Bildmarke, Wortmarke und .ico
 └── src/AdminWerk/
     ├── AdminWerk.csproj
     ├── App.xaml(.cs)           Anwendungseinstieg, deutsche Kultur
@@ -213,6 +220,34 @@ Die Anwendung ist nach MVVM aufgebaut und kommt ohne Fremdbibliotheken aus.
   PowerShell-Sitzung nötig ist.
 * **Alle Skripte sind gegen den Parser von Windows PowerShell 5.1 geprüft** und kommen ohne
   Syntax aus, die erst ab PowerShell 7 verfügbar ist.
+
+---
+
+## Bildmarke
+
+Ein Sechskant im Blauverlauf der Anwendung, darin ein „A“ — der Sechskant für „Werk“,
+das A für AdminWerk. Bewusst ohne fremde Marken und ohne Anlehnung an bestehende Symbole:
+
+* **kein Windows-Logo** — das ist eine Marke der Microsoft Corporation und in einem
+  Produktsymbol Dritter nicht zulässig
+* **keine blaue Kachel mit `>_`** — das ist praktisch das Symbol von PowerShell und wäre in
+  der Taskleiste direkt daneben nicht zu unterscheiden
+
+Alle Dateien entstehen aus `tools/logo-erzeugen.py`:
+
+```powershell
+python tools\logo-erzeugen.py .
+```
+
+| Datei | Zweck |
+|---|---|
+| `docs/bilder/logo.png` | Bildmarke, 512 px, transparent |
+| `docs/bilder/logo-wortmarke-hell.png` | Wortmarke für helle Hintergründe |
+| `docs/bilder/logo-wortmarke-dunkel.png` | Wortmarke für dunkle Hintergründe |
+| `src/AdminWerk/Themes/adminwerk.ico` | Anwendungssymbol, 16 bis 256 px |
+
+Bei kleinen Größen werden Rand und Buchstabengröße nachgeführt, damit die Marke auch bei
+16 px in der Titelleiste lesbar bleibt.
 
 ---
 

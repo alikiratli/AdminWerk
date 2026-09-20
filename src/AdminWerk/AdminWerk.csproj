@@ -13,7 +13,14 @@
     <Product>AdminWerk - Windows Administration Suite</Product>
     <Company>AdminWerk</Company>
     <NeutralLanguage>de-DE</NeutralLanguage>
+    <ApplicationIcon>Themes\adminwerk.ico</ApplicationIcon>
   </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Als Resource eingebettet, damit das Fenster das Symbol auch dann hat,
+         wenn die Anwendung nicht ueber die EXE gestartet wird. -->
+    <Resource Include="Themes\adminwerk.ico" />
+  </ItemGroup>
 
   <ItemGroup>
     <!-- Skriptkatalog wird neben die EXE kopiert, damit Admins eigene Skripte ergaenzen koennen. -->

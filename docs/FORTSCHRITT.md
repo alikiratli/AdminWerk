@@ -169,17 +169,48 @@ nicht nur gebaut:
 * Nach Neustart der Anwendung ist die Auswahl unverändert vorhanden
 * Fehlende `favoriten.json` führt zu leerer Auswahl, nicht zu einem Fehler
 
-### Logo
+### Bildmarke und Anwendungssymbol
 
-Eine `Logo.png` wurde ins Projektverzeichnis gelegt, aber **bewusst nicht eingebunden und nicht
-committet**: Sie enthält das Windows-Logo (Marke der Microsoft Corporation), hat keinen
-Alphakanal (weisser Kasten auf dunklem Hintergrund) und ist für Symbolgrössen von 16–32 px zu
-detailreich. Siehe Notiz im Projektverlauf.
+**Der erste Entwurf wurde verworfen.** Eine `Logo.png` im Projektverzeichnis enthielt das
+Windows-Logo — eine Marke der Microsoft Corporation, die in einem Produktsymbol Dritter nichts
+zu suchen hat, erst recht nicht in einem öffentlichen Repository. Dazu kamen drei handwerkliche
+Punkte: kein Alphakanal (weisser Kasten auf dunklem Hintergrund), zu detailreich für 16–32 px
+und der Schriftzug „Windows Administration **Toolkit**" statt „**Suite**". Die Datei wurde
+deshalb weder eingebunden noch committet.
+
+**Der zweite Entwurf, eine blaue Kachel mit `>_`, wurde ebenfalls verworfen** — und das war der
+lehrreichere Fehler. Er war technisch einwandfrei: zwei Formen, bei 16 px lesbar, keine fremde
+Marke. Nur sieht genau so das Symbol von PowerShell aus. Ein Werkzeug, das in der Taskleiste
+direkt neben PowerShell liegt, darf nicht wie PowerShell aussehen. Aus „enthält keine fremde
+Marke" folgt eben noch nicht „ist unterscheidbar".
+
+**Die gewählte Marke:** ein Sechskant im Blauverlauf der Anwendung mit einem „A" in Segoe UI
+Bold. Der Sechskant steht für „Werk" — Handwerk, Technik —, das A für AdminWerk. Der Umriss
+unterscheidet sich schon auf den ersten Blick von den Quadraten und Kacheln der übrigen
+Entwicklerwerkzeuge.
+
+Fünf Entwürfe wurden dafür nebeneinander in den Grössen 160/48/32/24/16 px gerendert, jeweils
+auf hellem und auf dunklem Grund. Ohne diesen Vergleich wäre die Ähnlichkeit zu PowerShell
+nicht aufgefallen — bei 256 px sieht fast jeder Entwurf gut aus.
+
+**Erzeugung:** `tools/logo-erzeugen.py` (Python mit Pillow) erzeugt alle Dateien reproduzierbar.
+Rand und Buchstabengrösse werden je Symbolgrösse nachgeführt: bei 16 px bleibt fast kein Rand,
+sonst würde die Marke zu viel Fläche verschenken. Die `.ico`-Datei wird selbst zusammengesetzt,
+weil sie sieben Grössen von 16 bis 256 px enthalten soll und jede davon einzeln gezeichnet wird,
+statt aus einer grossen Fassung heruntergerechnet zu werden.
+
+Eingebunden über `ApplicationIcon` (Symbol der EXE) und zusätzlich als `Resource` samt
+`Icon="Themes/adminwerk.ico"` am Fenster. Geprüft wurde beides: Das Symbol liess sich mit
+`ExtractIconEx` aus der gebauten EXE holen (48 px und 24 px), und die Titelleiste des laufenden
+Fensters zeigt es.
+
+Die README trägt jetzt eine Wortmarke im Kopf, in zwei Fassungen — sonst verschwindet „Admin"
+im hellen Thema von GitHub. Die Auswahl übernimmt `<picture>` mit `prefers-color-scheme`.
 
 ### Als Nächstes
 
 * [x] ~~Skripte als Favoriten markieren können~~ — erledigt
-* [ ] Anwendungssymbol (`.ico`) ergänzen — braucht zuvor eine markenfreie Bildmarke
+* [x] ~~Anwendungssymbol (`.ico`) ergänzen~~ — erledigt
 * [ ] Parameterblock eines Skripts in der Detailansicht gesondert darstellen
 * [ ] Suchfeld über `Strg+F` erreichbar machen, Tastaturbedienung insgesamt schärfen
 * [ ] Weitere Bereiche erwägen: Drucker, Hyper-V, Zertifikate, Exchange
