@@ -14,8 +14,14 @@ public sealed class HauptViewModel : ViewModelBasis
     /// <summary>Pseudokategorie, die alle Skripte zusammenfasst.</summary>
     public const string AlleKategorienId = "*";
 
+    /// <summary>Pseudokategorie, die nur die Favoriten des Benutzers zeigt.</summary>
+    public const string FavoritenKategorieId = "+";
+
     private readonly KatalogDienst _katalogDienst;
+    private readonly FavoritenDienst _favoritenDienst;
     private readonly List<ScriptEintrag> _alleSkripte = [];
+
+    private int _echteKategorien;
 
     private ScriptKategorie? _ausgewaehlteKategorie;
     private ScriptEintrag? _ausgewaehltesSkript;
@@ -23,13 +29,14 @@ public sealed class HauptViewModel : ViewModelBasis
     private string _statusmeldung = string.Empty;
     private string? _ladefehler;
 
-    public HauptViewModel() : this(new KatalogDienst())
+    public HauptViewModel() : this(new KatalogDienst(), new FavoritenDienst())
     {
     }
 
-    public HauptViewModel(KatalogDienst katalogDienst)
+    public HauptViewModel(KatalogDienst katalogDienst, FavoritenDienst favoritenDienst)
     {
         _katalogDienst = katalogDienst;
+        _favoritenDienst = favoritenDienst;
 
         KopierenBefehl = new AktionsBefehl(_ => SkriptKopieren(), _ => AusgewaehltesSkript is not null);
         SpeichernBefehl = new AktionsBefehl(_ => SkriptSpeichern(), _ => AusgewaehltesSkript is not null);
@@ -37,6 +44,7 @@ public sealed class HauptViewModel : ViewModelBasis
         SucheLeerenBefehl = new AktionsBefehl(_ => Suchbegriff = string.Empty,
             _ => !string.IsNullOrEmpty(Suchbegriff));
         NeuLadenBefehl = new AktionsBefehl(_ => KatalogLaden());
+        FavoritUmschaltenBefehl = new AktionsBefehl(FavoritUmschalten, p => (p ?? AusgewaehltesSkript) is not null);
 
         KatalogLaden();
     }
@@ -54,6 +62,8 @@ public sealed class HauptViewModel : ViewModelBasis
     public AktionsBefehl SucheLeerenBefehl { get; }
 
     public AktionsBefehl NeuLadenBefehl { get; }
+
+    public AktionsBefehl FavoritUmschaltenBefehl { get; }
 
     public ScriptKategorie? AusgewaehlteKategorie
     {
@@ -119,7 +129,18 @@ public sealed class HauptViewModel : ViewModelBasis
         ? "1 Skript"
         : $"{GefilterteSkripte.Count} Skripte";
 
-    public string KatalogInfo => $"{_alleSkripte.Count} Skripte in {Math.Max(Kategorien.Count - 1, 0)} Kategorien";
+    public string KatalogInfo => $"{_alleSkripte.Count} Skripte in {_echteKategorien} Kategorien";
+
+    public int FavoritenAnzahl => _alleSkripte.Count(s => s.IstFavorit);
+
+    /// <summary>True, wenn die aktuelle Ansicht kein einziges Skript enthaelt.</summary>
+    public bool KeineTreffer => GefilterteSkripte.Count == 0 && !HatLadefehler;
+
+    /// <summary>Hinweistext fuer die leere Ansicht - in der Favoritenansicht mit Anleitung.</summary>
+    public string Leermeldung =>
+        AusgewaehlteKategorie?.Id == FavoritenKategorieId && Suchbegriff.Trim().Length == 0
+            ? "Noch keine Favoriten.\n\nMarkieren Sie ein Skript mit dem Stern ☆\nin der Liste oder mit Strg+D."
+            : "Keine Skripte gefunden.";
 
     private void KatalogLaden()
     {
@@ -141,6 +162,14 @@ public sealed class HauptViewModel : ViewModelBasis
                 Symbol = "◆"
             });
 
+            Kategorien.Add(new ScriptKategorie
+            {
+                Id = FavoritenKategorieId,
+                Name = "Favoriten",
+                Beschreibung = "Die Skripte, die Sie mit dem Stern markiert haben.",
+                Symbol = "★"
+            });
+
             foreach (var kategorie in katalog.Kategorien)
             {
                 Kategorien.Add(kategorie);
@@ -154,6 +183,14 @@ public sealed class HauptViewModel : ViewModelBasis
                     : skript.KategorieId;
             }
 
+            // Gespeicherte Favoritenauswahl auf die frisch geladenen Skripte uebertragen.
+            var favoriten = _favoritenDienst.Laden();
+            foreach (var skript in _alleSkripte)
+            {
+                skript.IstFavorit = favoriten.Contains(skript.Id);
+            }
+
+            _echteKategorien = katalog.Kategorien.Count;
             Ladefehler = null;
         }
         catch (Exception ex)
@@ -174,7 +211,12 @@ public sealed class HauptViewModel : ViewModelBasis
         var suche = Suchbegriff.Trim().ToLowerInvariant();
 
         var treffer = _alleSkripte
-            .Where(s => kategorieId == AlleKategorienId || s.KategorieId == kategorieId)
+            .Where(s => kategorieId switch
+            {
+                AlleKategorienId      => true,
+                FavoritenKategorieId  => s.IstFavorit,
+                _                     => s.KategorieId == kategorieId
+            })
             .Where(s => suche.Length == 0 || s.Suchtext.Contains(suche, StringComparison.Ordinal))
             .OrderBy(s => s.Titel, StringComparer.CurrentCulture);
 
@@ -190,6 +232,38 @@ public sealed class HauptViewModel : ViewModelBasis
                               ?? GefilterteSkripte.FirstOrDefault();
 
         BenachrichtigeAenderung(nameof(TrefferText));
+        BenachrichtigeAenderung(nameof(KeineTreffer));
+        BenachrichtigeAenderung(nameof(Leermeldung));
+    }
+
+    /// <summary>
+    /// Markiert ein Skript als Favorit oder nimmt die Markierung zurueck.
+    /// Der Parameter kommt aus der Liste; ohne Parameter gilt die aktuelle Auswahl.
+    /// </summary>
+    private void FavoritUmschalten(object? parameter)
+    {
+        if ((parameter as ScriptEintrag ?? AusgewaehltesSkript) is not { } skript)
+        {
+            return;
+        }
+
+        skript.IstFavorit = !skript.IstFavorit;
+
+        var fehler = _favoritenDienst.Speichern(_alleSkripte.Where(s => s.IstFavorit).Select(s => s.Id));
+
+        Statusmeldung = fehler is null
+            ? skript.IstFavorit
+                ? $"„{skript.Titel}“ zu den Favoriten hinzugefügt."
+                : $"„{skript.Titel}“ aus den Favoriten entfernt."
+            : $"Favoriten konnten nicht gespeichert werden: {fehler}";
+
+        BenachrichtigeAenderung(nameof(FavoritenAnzahl));
+
+        // In der Favoritenansicht verschwindet ein abgewähltes Skript sofort aus der Liste.
+        if (AusgewaehlteKategorie?.Id == FavoritenKategorieId)
+        {
+            FilterAnwenden();
+        }
     }
 
     private void SkriptKopieren()

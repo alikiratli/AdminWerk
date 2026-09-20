@@ -113,10 +113,73 @@ Wo lokale Schnittstellen nötig sind (Windows Update, Registrierung), läuft die
 * Die laufende Anwendung sperrt beim Neubauen ihre eigene `AdminWerk.exe`. Vor `dotnet build`
   also beenden.
 
+### Nachtrag: Favoriten
+
+Der Katalog ist mit 51 Skripten gross genug, dass die täglich gebrauchten Skripte untergehen.
+Deshalb eine Favoritenfunktion:
+
+* **Stern in der Liste** — jedes Skript lässt sich direkt in der Trefferliste markieren
+* **Schaltfläche im Detailbereich** — beschriftet, damit die Funktion auffindbar ist
+* **`Strg+D`** — schaltet das ausgewählte Skript um, egal wo der Fokus gerade steht
+* **Eigener Reiter „Favoriten"** — steht direkt neben „Alle Skripte", mit Zähler in der Statusleiste
+
+**Gespeichert wird je Benutzer, nicht im Projekt.**
+`Services/FavoritenDienst` legt die Auswahl unter `%AppData%\AdminWerk\favoriten.json` ab — eine
+schlichte Liste von Skript-IDs. Der Katalog gehört zur Anwendung und wird mit ihr aktualisiert;
+die Favoriten gehören dem Benutzer und dürfen ein Update nicht verlieren. Ist die Datei
+beschädigt oder nicht lesbar, startet die Anwendung mit leerer Auswahl statt mit einem Fehler.
+
+`ScriptEintrag` implementiert dafür jetzt `INotifyPropertyChanged` — nur für `IstFavorit`, damit
+der Stern sofort umschlägt, ohne die Liste neu aufzubauen.
+
+### Dabei gefunden: Geisterpanel im Detailbereich
+
+Mit der Favoritenansicht war zum ersten Mal ein Zustand erreichbar, in dem **kein** Skript
+ausgewählt ist. Dabei kam ein Fehler zum Vorschein, der vorher nie sichtbar war: Der
+Detailbereich blieb als leeres Gerüst stehen — Schaltflächen und leere Kennzeichen ohne Inhalt.
+
+Ursache: `DataContext` und `Visibility` hingen am selben `Grid`.
+
+```xml
+<Grid Visibility="{Binding HatAuswahl, ...}"
+      DataContext="{Binding AusgewaehltesSkript}">
+```
+
+Sobald `AusgewaehltesSkript` null ist, wird auch der `DataContext` null — und die
+`Visibility`-Bindung läuft ins Leere statt gegen das ViewModel. WPF lässt das Element dann
+einfach sichtbar. Die Bindung zeigt jetzt ausdrücklich auf das Fenster:
+
+```xml
+Visibility="{Binding DataContext.HatAuswahl,
+                     RelativeSource={RelativeSource AncestorType=Window}, ...}"
+```
+
+Zusätzlich zeigt die leere Ansicht nun einen Hinweistext statt einer weissen Fläche — in der
+Favoritenansicht mit der Anleitung, wie man Favoriten setzt.
+
+### Geprüft (Favoriten)
+
+Die Funktion wurde über UI Automation und Tastatureingabe am laufenden Fenster getestet,
+nicht nur gebaut:
+
+* Vorbereitete `favoriten.json` wird beim Start übernommen (goldene Sterne, Zähler stimmt)
+* Klick auf den Listenstern schreibt die Datei — drei Klicks, drei neue IDs
+* Schaltfläche im Detailbereich setzt und entfernt korrekt
+* `Strg+D` schaltet das ausgewählte Skript um und speichert
+* Nach Neustart der Anwendung ist die Auswahl unverändert vorhanden
+* Fehlende `favoriten.json` führt zu leerer Auswahl, nicht zu einem Fehler
+
+### Logo
+
+Eine `Logo.png` wurde ins Projektverzeichnis gelegt, aber **bewusst nicht eingebunden und nicht
+committet**: Sie enthält das Windows-Logo (Marke der Microsoft Corporation), hat keinen
+Alphakanal (weisser Kasten auf dunklem Hintergrund) und ist für Symbolgrössen von 16–32 px zu
+detailreich. Siehe Notiz im Projektverlauf.
+
 ### Als Nächstes
 
-* [ ] Anwendungssymbol (`.ico`) ergänzen und im Projekt eintragen
-* [ ] Skripte als Favoriten markieren können
+* [x] ~~Skripte als Favoriten markieren können~~ — erledigt
+* [ ] Anwendungssymbol (`.ico`) ergänzen — braucht zuvor eine markenfreie Bildmarke
 * [ ] Parameterblock eines Skripts in der Detailansicht gesondert darstellen
 * [ ] Suchfeld über `Strg+F` erreichbar machen, Tastaturbedienung insgesamt schärfen
 * [ ] Weitere Bereiche erwägen: Drucker, Hyper-V, Zertifikate, Exchange

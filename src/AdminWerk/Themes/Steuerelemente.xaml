@@ -51,6 +51,55 @@
         <Setter Property="Foreground" Value="{StaticResource Text.Primaer}" />
     </Style>
 
+    <!-- ===================== Favoritenstern ===================== -->
+
+    <!-- Reiner Glyph-Schalter fuer die Skriptliste. Das Zeichen kommt aus dem Trigger. -->
+    <Style x:Key="Schaltflaeche.Stern" TargetType="Button">
+        <Setter Property="Content" Value="☆" />
+        <Setter Property="Foreground" Value="{StaticResource Text.Gedaempft}" />
+        <Setter Property="FontSize" Value="17" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Padding" Value="8,0,2,0" />
+        <Setter Property="VerticalAlignment" Value="Top" />
+        <Setter Property="ToolTip" Value="Als Favorit merken (Strg+D)" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border Background="{TemplateBinding Background}">
+                        <ContentPresenter HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"
+                                          Margin="{TemplateBinding Padding}" />
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+        <Style.Triggers>
+            <!-- Reihenfolge zaehlt: der Favoritenzustand soll den Hover-Zustand uebersteuern. -->
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Foreground" Value="{StaticResource Akzent.Hell}" />
+            </Trigger>
+            <DataTrigger Binding="{Binding IstFavorit}" Value="True">
+                <Setter Property="Content" Value="★" />
+                <Setter Property="Foreground" Value="{StaticResource Akzent.Warnung}" />
+                <Setter Property="ToolTip" Value="Favorit entfernen (Strg+D)" />
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
+    <!-- Beschriftete Variante fuer den Detailbereich. -->
+    <Style x:Key="Schaltflaeche.Favorit" TargetType="Button" BasedOn="{StaticResource Schaltflaeche.Basis}">
+        <Setter Property="Background" Value="{StaticResource Flaeche.Erhoben}" />
+        <Setter Property="BorderBrush" Value="{StaticResource Linie.Betont}" />
+        <Setter Property="Foreground" Value="{StaticResource Text.Sekundaer}" />
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding IstFavorit}" Value="True">
+                <Setter Property="BorderBrush" Value="{StaticResource Akzent.Warnung}" />
+                <Setter Property="Foreground" Value="{StaticResource Akzent.Warnung}" />
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
     <!-- ===================== Suchfeld ===================== -->
 
     <Style x:Key="Suchfeld" TargetType="TextBox">

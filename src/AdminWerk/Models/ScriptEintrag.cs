@@ -1,10 +1,13 @@
+using System.ComponentModel;
 using System.Text.Json.Serialization;
 
 namespace AdminWerk.Models;
 
 /// <summary>Ein einzelnes PowerShell-Skript samt Metadaten aus dem Katalog.</summary>
-public sealed class ScriptEintrag
+public sealed class ScriptEintrag : INotifyPropertyChanged
 {
+    private bool _istFavorit;
+
     [JsonPropertyName("id")]
     public string Id { get; init; } = string.Empty;
 
@@ -45,6 +48,33 @@ public sealed class ScriptEintrag
 
     [JsonIgnore]
     public string RechteText => AdminRechte ? "Administratorrechte erforderlich" : "Standardbenutzer genügt";
+
+    /// <summary>
+    /// Vom Benutzer als Favorit markiert. Wird nicht im Katalog gespeichert, sondern
+    /// je Benutzer im Anwendungsdatenverzeichnis abgelegt.
+    /// </summary>
+    [JsonIgnore]
+    public bool IstFavorit
+    {
+        get => _istFavorit;
+        set
+        {
+            if (_istFavorit == value)
+            {
+                return;
+            }
+
+            _istFavorit = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IstFavorit)));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(FavoritText)));
+        }
+    }
+
+    /// <summary>Beschriftung der Favoritenschaltflaeche im Detailbereich.</summary>
+    [JsonIgnore]
+    public string FavoritText => IstFavorit ? "★  Favorit" : "☆  Als Favorit merken";
+
+    public event PropertyChangedEventHandler? PropertyChanged;
 
     /// <summary>Alle durchsuchbaren Felder in einem vorbereiteten Kleinbuchstaben-Puffer.</summary>
     [JsonIgnore]

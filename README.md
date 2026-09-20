@@ -26,12 +26,16 @@ den Inhalt vorher gelesen hat.
 | Funktion | Beschreibung |
 |---|---|
 | **Kategorien** | System, Netzwerk, Konten und Security als eigene Bereiche, dazu eine Gesamtansicht |
+| **Favoriten** | Häufig gebrauchte Skripte mit dem Stern markieren (oder `Strg+D`) und über den eigenen Reiter „Favoriten" wiederfinden |
 | **Volltextsuche** | Durchsucht Titel, Beschreibung, Schlagwörter **und** den Skriptinhalt |
 | **Syntaxhervorhebung** | PowerShell-Quelltext farblich aufbereitet (Kommentare, Cmdlets, Variablen, Parameter) |
 | **Zwischenablage** | Das vollständige Skript mit einem Klick kopieren |
 | **Als `.ps1` speichern** | Export mit UTF-8-BOM, damit Windows PowerShell 5.1 die Umlaute korrekt liest |
 | **Kennzeichnung** | Jedes Skript zeigt Kategorie, benötigte Rechte und Voraussetzungen |
 | **Erweiterbar** | Eigene Skripte im Ordner `Scripts` ergänzen, `catalog.json` pflegen, „Neu laden“ klicken |
+
+Die Favoritenauswahl liegt je Benutzer unter `%AppData%\AdminWerk\favoriten.json` und überlebt
+sowohl einen Neustart der Anwendung als auch eine Erweiterung des Skriptkatalogs.
 
 ---
 
@@ -178,7 +182,7 @@ AdminWerk/
     ├── App.xaml(.cs)           Anwendungseinstieg, deutsche Kultur
     ├── MainWindow.xaml(.cs)    Hauptfenster
     ├── Models/                 ScriptEintrag, ScriptKategorie, ScriptKatalog
-    ├── Services/               KatalogDienst — liest catalog.json und die .ps1-Dateien
+    ├── Services/               KatalogDienst (catalog.json + .ps1), FavoritenDienst
     ├── ViewModels/             HauptViewModel, AktionsBefehl, ViewModelBasis
     ├── Views/                  PowerShellHervorhebung — Syntaxeinfärbung
     ├── Themes/                 Palette.xaml, Steuerelemente.xaml

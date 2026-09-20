@@ -20,6 +20,10 @@
         <BooleanToVisibilityConverter x:Key="BoolZuSichtbarkeit" />
     </Window.Resources>
 
+    <Window.InputBindings>
+        <KeyBinding Key="D" Modifiers="Control" Command="{Binding FavoritUmschaltenBefehl}" />
+    </Window.InputBindings>
+
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -128,30 +132,52 @@
                                Foreground="{StaticResource Text.Gedaempft}" />
                 </StackPanel>
 
+                <!-- Hinweis, solange die Ansicht leer ist (z. B. noch keine Favoriten). -->
+                <TextBlock DockPanel.Dock="Top"
+                           Text="{Binding Leermeldung}"
+                           Margin="4,24,4,0"
+                           FontSize="13"
+                           LineHeight="22"
+                           TextWrapping="Wrap"
+                           Foreground="{StaticResource Text.Gedaempft}"
+                           Visibility="{Binding KeineTreffer, Converter={StaticResource BoolZuSichtbarkeit}}" />
+
                 <ListBox Style="{StaticResource Skriptliste}"
                          ItemsSource="{Binding GefilterteSkripte}"
                          SelectedItem="{Binding AusgewaehltesSkript}">
                     <ListBox.ItemTemplate>
                         <DataTemplate>
-                            <StackPanel>
-                                <TextBlock Text="{Binding Titel}"
-                                           FontSize="13.5"
-                                           FontWeight="SemiBold"
-                                           TextWrapping="Wrap"
-                                           Foreground="{StaticResource Text.Primaer}" />
-                                <TextBlock Text="{Binding Beschreibung}"
-                                           FontSize="12"
-                                           TextWrapping="Wrap"
-                                           MaxHeight="34"
-                                           Margin="0,4,0,0"
-                                           TextTrimming="CharacterEllipsis"
-                                           Foreground="{StaticResource Text.Gedaempft}" />
-                                <TextBlock Text="{Binding TagZeile}"
-                                           FontSize="11"
-                                           Margin="0,7,0,0"
-                                           TextTrimming="CharacterEllipsis"
-                                           Foreground="{StaticResource Akzent.Hell}" />
-                            </StackPanel>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="{Binding Titel}"
+                                               FontSize="13.5"
+                                               FontWeight="SemiBold"
+                                               TextWrapping="Wrap"
+                                               Foreground="{StaticResource Text.Primaer}" />
+                                    <TextBlock Text="{Binding Beschreibung}"
+                                               FontSize="12"
+                                               TextWrapping="Wrap"
+                                               MaxHeight="34"
+                                               Margin="0,4,0,0"
+                                               TextTrimming="CharacterEllipsis"
+                                               Foreground="{StaticResource Text.Gedaempft}" />
+                                    <TextBlock Text="{Binding TagZeile}"
+                                               FontSize="11"
+                                               Margin="0,7,0,0"
+                                               TextTrimming="CharacterEllipsis"
+                                               Foreground="{StaticResource Akzent.Hell}" />
+                                </StackPanel>
+
+                                <Button Grid.Column="1"
+                                        Style="{StaticResource Schaltflaeche.Stern}"
+                                        Command="{Binding DataContext.FavoritUmschaltenBefehl, RelativeSource={RelativeSource AncestorType=Window}}"
+                                        CommandParameter="{Binding}" />
+                            </Grid>
                         </DataTemplate>
                     </ListBox.ItemTemplate>
                 </ListBox>
@@ -170,8 +196,12 @@
                     BorderThickness="1"
                     CornerRadius="8">
 
-                <Grid Visibility="{Binding HatAuswahl, Converter={StaticResource BoolZuSichtbarkeit}}"
-                      DataContext="{Binding AusgewaehltesSkript}">
+                <!-- Visibility bewusst gegen das Fenster gebunden: der DataContext dieses Grids
+                     ist das ausgewaehlte Skript und damit null, sobald nichts ausgewaehlt ist. -->
+                <Grid DataContext="{Binding AusgewaehltesSkript}"
+                      Visibility="{Binding DataContext.HatAuswahl,
+                                           RelativeSource={RelativeSource AncestorType=Window},
+                                           Converter={StaticResource BoolZuSichtbarkeit}}">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
@@ -227,7 +257,13 @@
                                     Margin="0,0,8,0" />
                             <Button Content="Als .ps1 speichern"
                                     Style="{StaticResource Schaltflaeche.Sekundaer}"
-                                    Command="{Binding DataContext.SpeichernBefehl, RelativeSource={RelativeSource AncestorType=Window}}" />
+                                    Command="{Binding DataContext.SpeichernBefehl, RelativeSource={RelativeSource AncestorType=Window}}"
+                                    Margin="0,0,8,0" />
+                            <Button Content="{Binding FavoritText}"
+                                    Style="{StaticResource Schaltflaeche.Favorit}"
+                                    Command="{Binding DataContext.FavoritUmschaltenBefehl, RelativeSource={RelativeSource AncestorType=Window}}"
+                                    CommandParameter="{Binding}"
+                                    ToolTip="Strg+D" />
                         </StackPanel>
                     </StackPanel>
 
@@ -266,10 +302,15 @@
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
-                <TextBlock Grid.Column="0"
-                           Text="{Binding TrefferText}"
-                           FontSize="12"
-                           Foreground="{StaticResource Text.Sekundaer}" />
+                <StackPanel Grid.Column="0" Orientation="Horizontal">
+                    <TextBlock Text="{Binding TrefferText}"
+                               FontSize="12"
+                               Foreground="{StaticResource Text.Sekundaer}" />
+                    <TextBlock FontSize="12"
+                               Margin="14,0,0,0"
+                               Foreground="{StaticResource Akzent.Warnung}"
+                               Text="{Binding FavoritenAnzahl, StringFormat=★ {0} Favoriten}" />
+                </StackPanel>
                 <TextBlock Grid.Column="1"
                            Text="{Binding Statusmeldung}"
                            FontSize="12"
