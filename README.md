@@ -25,7 +25,7 @@ den Inhalt vorher gelesen hat.
 
 | Funktion | Beschreibung |
 |---|---|
-| **Kategorien** | System, Netzwerk und Security als eigene Bereiche, dazu eine Gesamtansicht |
+| **Kategorien** | System, Netzwerk, Konten und Security als eigene Bereiche, dazu eine Gesamtansicht |
 | **Volltextsuche** | Durchsucht Titel, Beschreibung, Schlagwörter **und** den Skriptinhalt |
 | **Syntaxhervorhebung** | PowerShell-Quelltext farblich aufbereitet (Kommentare, Cmdlets, Variablen, Parameter) |
 | **Zwischenablage** | Das vollständige Skript mit einem Klick kopieren |
@@ -37,9 +37,9 @@ den Inhalt vorher gelesen hat.
 
 ## Skriptkatalog
 
-Aktuell **38 Skripte** in drei Bereichen.
+Aktuell **51 Skripte** in vier Bereichen.
 
-### ▣ System (13)
+### ▣ System (16)
 
 | Skript | Zweck |
 |---|---|
@@ -51,13 +51,16 @@ Aktuell **38 Skripte** in drei Bereichen.
 | Kritische Ereignisse im Ereignisprotokoll | Gruppiert nach Quelle und Ereignis-ID |
 | Kritische Dienste überwachen und starten | Automatischer Neustart gestoppter Dienste mit Protokoll |
 | Starttypen der Dienste gegen Soll prüfen | Deckt Abweichungen auf, die erst beim Neustart auffallen |
+| **Dienststatus über mehrere Computer** | Matrix: eine Zeile je Computer, eine Spalte je Dienst |
 | Patchstand und ausstehende Updates | Hotfix-Historie plus Windows-Update-Abfrage |
+| **Patch-Compliance-Bericht** | Einstufung je System und Gesamtquote über den ganzen Bestand |
 | Software-Inventar erstellen | Aus der Registrierung statt über `Win32_Product` |
+| **Software-Inventar über mehrere Computer** | Verteilung je Version, uneinheitliche Stände, gezielte Suche |
 | Hardware-Inventar erfassen | Seriennummer, Modell, CPU, RAM, BIOS, Netzwerk |
 | Geplante Aufgaben prüfen | Fehlgeschlagene, deaktivierte und privilegierte Aufgaben |
 | Prozesse mit höchster CPU- und RAM-Last | Echte CPU-Messung über zwei Messpunkte |
 
-### ◎ Netzwerk (10)
+### ◎ Netzwerk (11)
 
 | Skript | Zweck |
 |---|---|
@@ -66,13 +69,33 @@ Aktuell **38 Skripte** in drei Bereichen.
 | TCP-Ports auf Erreichbarkeit testen | Ziel-/Port-Matrix mit Zeitlimit und Dienstnamen |
 | Namensauflösung gegen mehrere DNS-Server | Findet abweichende Antworten zwischen Servern |
 | Windows-DNS-Server prüfen | Dienst, Zonen, Weiterleitungen, Stichprobe |
+| **DNS-Einträge einer Zone prüfen** | Alle Einträge nach Typ, DC-SRV-Einträge, veraltete A-Einträge |
 | DHCP-Bereiche und Auslastung | Belegung in Prozent, abgelaufene Leases |
 | Lauschende Ports mit Prozesszuordnung | Welches Programm hat welchen Port geöffnet |
 | Route verfolgen und Latenz messen | Hebt den Sprung mit dem größten Latenzzuwachs hervor |
 | Aktive Firewall-Regeln auswerten | Eingehende Erlaubnisregeln mit Port, Quelle und Programm |
 | SMB-Freigaben und Berechtigungen | Freigabe- und NTFS-Rechte plus aktive Sitzungen |
 
-### ⬟ Security (15)
+### ◍ Konten (11)
+
+Benutzer, Gruppen und Active Directory. Die vier Skripte, die etwas **verändern**, laufen
+standardmäßig als Testlauf und tun erst mit `-Anwenden` etwas.
+
+| Skript | Zweck |
+|---|---|
+| **Lokale Benutzer anlegen** | Einzeln oder als Stapel aus CSV, mit erzeugtem Kennwort |
+| **Konten aktivieren oder deaktivieren** | Offboarding: sperren, aus Gruppen nehmen, Vermerk, OU-Umzug |
+| **Lokale Gruppen und Mitglieder** | Zwei Sichten: je Gruppe und je Konto |
+| **Lokale Konten und Aufräumkandidaten** | Nie angemeldet, inaktiv, Kennwort ohne Ablauf, ohne Kennwortpflicht |
+| Lokale Administratoren auflisten | Über die SID — sprachunabhängig |
+| **AD-Benutzer aus CSV anlegen** | Onboarding im Stapel mit Stammdaten, Vorgesetztem und Gruppen |
+| **AD-Gruppenmitgliedschaften prüfen** | Wer ist drin, wo ist er drin, welche Gruppen sind leer oder riesig |
+| **AD-Computer und Betriebssysteme** | Verteilung, Build-Stände, Systeme ohne Herstellerunterstützung |
+| **AD: Deaktivierte und abgelaufene Konten** | Inklusive deaktivierter Konten in privilegierten Gruppen |
+| Inaktive AD-Konten finden | Benutzer und Computer ohne Anmeldung seit X Tagen |
+| Bald ablaufende AD-Kennwörter | Mit Vorlaufzeit und CSV-Export für den Servicedesk |
+
+### ⬟ Security (13)
 
 | Skript | Zweck |
 |---|---|
@@ -80,17 +103,15 @@ Aktuell **38 Skripte** in drei Bereichen.
 | Microsoft Defender — Status und Ausschlüsse | Echtzeitschutz, Signaturen, Manipulationsschutz, Ausschlüsse |
 | Firewall-Profile und Standardverhalten | Alle drei Profile inklusive Protokollierung |
 | BitLocker-Verschlüsselung prüfen | Schutzstatus und Schlüsselschutzvorrichtungen |
-| Lokale Administratoren auflisten | Über die SID — sprachunabhängig |
 | Gast- und Standardkonten prüfen | Konten mit SID-Endung `-500` und `-501` |
 | RDP-Konfiguration prüfen | Port, NLA, Sicherheitsstufe, Berechtigte, Firewall |
+| **RDP-Sitzungsverlauf auswerten** | Verbindungen mit Quell-IP, Zeiten, fehlgeschlagene RDP-Logins |
 | Fehlgeschlagene Anmeldungen auswerten | Erkennt Brute Force und Password Spraying |
 | Letzte erfolgreiche Anmeldungen | Ohne das Rauschen der Dienstanmeldungen |
 | Autostart-Programme prüfen | Markiert Einträge außerhalb üblicher Programmverzeichnisse |
 | Verdächtige Dienste aufspüren | Ungequotete Pfade, fehlende Signaturen |
 | Kennwort- und Sperrrichtlinie prüfen | Lokal und in der Domäne, mit Bewertung |
-| Inaktive AD-Konten finden | Benutzer und Computer ohne Anmeldung seit X Tagen |
 | Privilegierte AD-Gruppen prüfen | Domänen-, Organisations-, Schema-Admins, rekursiv |
-| Bald ablaufende AD-Kennwörter | Mit Vorlaufzeit und CSV-Export für den Servicedesk |
 
 ---
 
@@ -165,6 +186,7 @@ AdminWerk/
         ├── catalog.json
         ├── system/
         ├── netzwerk/
+        ├── konten/
         └── security/
 ```
 
@@ -176,8 +198,13 @@ Die Anwendung ist nach MVVM aufgebaut und kommt ohne Fremdbibliotheken aus.
 
 * **Skripte vor der Ausführung lesen.** Jedes Skript hat einen Kommentarkopf mit `.SYNOPSIS`,
   `.DESCRIPTION` und `.EXAMPLE`.
-* **Erst prüfen, dann ändern.** Skripte, die etwas verändern, besitzen einen Schalter wie
-  `-NurPruefen`. Im Zweifel damit beginnen.
+* **Erst prüfen, dann ändern.** Die meisten Skripte lesen nur. Die wenigen, die etwas
+  verändern — Konten anlegen, sperren, Dienste starten —, laufen standardmäßig als Testlauf
+  und zeigen zunächst nur, was sie tun *würden*. Erst `-Anwenden` (bzw. das Weglassen von
+  `-NurPruefen`) führt die Änderung wirklich aus.
+* **Eingebaute Konten bleiben unangetastet.** Die Konten-Skripte fassen Administrator (`-500`)
+  und Gast (`-501`) grundsätzlich nicht an, auch nicht mit `-Anwenden`.
+* **Erzeugte Kennwörter werden nur einmal angezeigt** und in keine Protokolldatei geschrieben.
 * **Administratorrechte.** Die Kennzeichnung im Detailbereich weist aus, ob eine erhöhte
   PowerShell-Sitzung nötig ist.
 * **Alle Skripte sind gegen den Parser von Windows PowerShell 5.1 geprüft** und kommen ohne

@@ -13,123 +13,60 @@
       "beschreibung": "Diagnose, Ports, DNS, DHCP, Firewall-Regeln und Freigaben."
     },
     {
+      "id": "konten",
+      "name": "Konten",
+      "symbol": "◍",
+      "beschreibung": "Benutzer, Gruppen und Active Directory: anlegen, sperren, berichten."
+    },
+    {
       "id": "security",
       "name": "Security",
       "symbol": "⬟",
-      "beschreibung": "Härtung, Defender, BitLocker, Konten, RDP und Active Directory."
+      "beschreibung": "Härtung, Defender, BitLocker, RDP, Anmeldungen und Persistenz."
     }
   ],
-
   "skripte": [
-    {
-      "id": "sys-datentraeger-pruefen",
-      "kategorie": "system",
-      "titel": "Freien Speicherplatz prüfen",
-      "beschreibung": "Prüft alle lokalen Datenträger gegen einen Schwellenwert, meldet kritische Laufwerke und schreibt sie in eine Logdatei.",
-      "datei": "system/datentraeger-pruefen.ps1",
-      "tags": ["Datenträger", "Überwachung", "Logging"],
-      "adminRechte": false,
-      "voraussetzung": "Windows 10/11, Server 2016+"
-    },
-    {
-      "id": "sys-datentraeger-bericht",
-      "kategorie": "system",
-      "titel": "HTML-Bericht zur Datenträgerbelegung",
-      "beschreibung": "Sammelt die Belegung mehrerer Computer und erzeugt einen farblich aufbereiteten HTML-Bericht zur Weitergabe.",
-      "datei": "system/datentraeger-bericht.ps1",
-      "tags": ["Datenträger", "Bericht", "HTML"],
-      "adminRechte": false,
-      "voraussetzung": "WMI-Zugriff auf die Zielsysteme"
-    },
-    {
-      "id": "sys-systemdateien-pruefen",
-      "kategorie": "system",
-      "titel": "Systemdateien prüfen und reparieren",
-      "beschreibung": "Führt DISM und SFC in der empfohlenen Reihenfolge aus und protokolliert das Ergebnis. Mit -NurPruefen wird nichts verändert.",
-      "datei": "system/systemdateien-pruefen.ps1",
-      "tags": ["SFC", "DISM", "Reparatur"],
-      "adminRechte": true,
-      "voraussetzung": "Laufzeit 10–40 Minuten"
-    },
-    {
-      "id": "sys-letzter-neustart",
-      "kategorie": "system",
-      "titel": "Letzter Neustart und Betriebsdauer",
-      "beschreibung": "Zeigt Startzeitpunkt und Laufzeit eines oder mehrerer Systeme und empfiehlt ab einer einstellbaren Grenze einen Neustart.",
-      "datei": "system/letzter-neustart.ps1",
-      "tags": ["Uptime", "Neustart", "Mehrere Systeme"],
-      "adminRechte": false,
-      "voraussetzung": "Windows 10/11, Server 2016+"
-    },
     {
       "id": "sys-neustart-ausstehend",
       "kategorie": "system",
       "titel": "Ausstehenden Neustart erkennen",
       "beschreibung": "Prüft alle gängigen Anzeiger für einen ausstehenden Neustart: CBS, Windows Update, Dateiumbenennungen und Computerumbenennung.",
       "datei": "system/neustart-ausstehend.ps1",
-      "tags": ["Neustart", "Patch-Management"],
+      "tags": [
+        "Neustart",
+        "Patch-Management"
+      ],
       "adminRechte": false,
       "voraussetzung": "Lesezugriff auf HKLM"
     },
     {
-      "id": "sys-ereignisprotokoll",
+      "id": "sys-dienste-zentral",
       "kategorie": "system",
-      "titel": "Kritische Ereignisse im Ereignisprotokoll",
-      "beschreibung": "Sammelt Fehler und kritische Meldungen aus System- und Anwendungsprotokoll, gruppiert nach Quelle und Ereignis-ID.",
-      "datei": "system/ereignisprotokoll-kritisch.ps1",
-      "tags": ["Ereignisprotokoll", "Fehleranalyse"],
+      "titel": "Dienststatus über mehrere Computer",
+      "beschreibung": "Fragt dieselbe Dienstliste auf allen Zielsystemen ab und stellt sie als Matrix dar – eine Zeile je Computer, eine Spalte je Dienst. Mit HTML- und CSV-Export.",
+      "datei": "system/dienste-mehrere-computer.ps1",
+      "tags": [
+        "Dienste",
+        "Mehrere Systeme",
+        "Bericht",
+        "HTML"
+      ],
       "adminRechte": true,
-      "voraussetzung": "Windows 10/11, Server 2016+"
+      "voraussetzung": "WMI-Zugriff; optional Modul ActiveDirectory"
     },
     {
-      "id": "sys-dienste-ueberwachen",
+      "id": "sys-datentraeger-pruefen",
       "kategorie": "system",
-      "titel": "Kritische Dienste überwachen und starten",
-      "beschreibung": "Prüft eine Dienstliste, startet gestoppte Dienste automatisch neu und protokolliert jede Aktion. Mit -NurPruefen als reine Kontrolle.",
-      "datei": "system/dienste-ueberwachen.ps1",
-      "tags": ["Dienste", "Automatisierung", "Logging"],
-      "adminRechte": true,
-      "voraussetzung": "Rechte zum Starten von Diensten"
-    },
-    {
-      "id": "sys-dienste-starttyp",
-      "kategorie": "system",
-      "titel": "Starttypen der Dienste gegen Soll prüfen",
-      "beschreibung": "Vergleicht den Starttyp wichtiger Dienste mit einer Soll-Vorgabe und deckt Abweichungen auf, die erst beim nächsten Neustart auffallen würden.",
-      "datei": "system/dienste-starttyp.ps1",
-      "tags": ["Dienste", "Konfiguration", "Compliance"],
+      "titel": "Freien Speicherplatz prüfen",
+      "beschreibung": "Prüft alle lokalen Datenträger gegen einen Schwellenwert, meldet kritische Laufwerke und schreibt sie in eine Logdatei.",
+      "datei": "system/datentraeger-pruefen.ps1",
+      "tags": [
+        "Datenträger",
+        "Überwachung",
+        "Logging"
+      ],
       "adminRechte": false,
       "voraussetzung": "Windows 10/11, Server 2016+"
-    },
-    {
-      "id": "sys-windows-update",
-      "kategorie": "system",
-      "titel": "Patchstand und ausstehende Updates",
-      "beschreibung": "Zeigt die zuletzt installierten Hotfixes, sucht über die Windows-Update-Schnittstelle nach ausstehenden Updates und meldet einen nötigen Neustart.",
-      "datei": "system/windows-update-status.ps1",
-      "tags": ["Windows Update", "Patch-Compliance"],
-      "adminRechte": true,
-      "voraussetzung": "Windows-Update-Dienst verfügbar"
-    },
-    {
-      "id": "sys-software-inventar",
-      "kategorie": "system",
-      "titel": "Software-Inventar erstellen",
-      "beschreibung": "Liest die installierten Programme aus der Registrierung – schnell und ohne die MSI-Nebenwirkungen von Win32_Product. Optional als CSV.",
-      "datei": "system/software-inventar.ps1",
-      "tags": ["Inventar", "Software", "CSV"],
-      "adminRechte": false,
-      "voraussetzung": "Windows 10/11, Server 2016+"
-    },
-    {
-      "id": "sys-hardware-inventar",
-      "kategorie": "system",
-      "titel": "Hardware-Inventar erfassen",
-      "beschreibung": "Erfasst Seriennummer, Modell, CPU, RAM, Datenträger, BIOS und Netzwerkkonfiguration – die Grundlage jeder Asset-Dokumentation.",
-      "datei": "system/hardware-inventar.ps1",
-      "tags": ["Inventar", "Hardware", "CSV"],
-      "adminRechte": false,
-      "voraussetzung": "WMI-Zugriff auf die Zielsysteme"
     },
     {
       "id": "sys-geplante-aufgaben",
@@ -137,9 +74,109 @@
       "titel": "Geplante Aufgaben prüfen",
       "beschreibung": "Findet fehlgeschlagene und deaktivierte Aufgaben sowie Aufgaben, die mit hohen Rechten laufen – auch sicherheitsrelevant.",
       "datei": "system/geplante-aufgaben-audit.ps1",
-      "tags": ["Scheduled Tasks", "Audit"],
+      "tags": [
+        "Scheduled Tasks",
+        "Audit"
+      ],
       "adminRechte": true,
       "voraussetzung": "Modul ScheduledTasks"
+    },
+    {
+      "id": "sys-datentraeger-bericht",
+      "kategorie": "system",
+      "titel": "HTML-Bericht zur Datenträgerbelegung",
+      "beschreibung": "Sammelt die Belegung mehrerer Computer und erzeugt einen farblich aufbereiteten HTML-Bericht zur Weitergabe.",
+      "datei": "system/datentraeger-bericht.ps1",
+      "tags": [
+        "Datenträger",
+        "Bericht",
+        "HTML"
+      ],
+      "adminRechte": false,
+      "voraussetzung": "WMI-Zugriff auf die Zielsysteme"
+    },
+    {
+      "id": "sys-hardware-inventar",
+      "kategorie": "system",
+      "titel": "Hardware-Inventar erfassen",
+      "beschreibung": "Erfasst Seriennummer, Modell, CPU, RAM, Datenträger, BIOS und Netzwerkkonfiguration – die Grundlage jeder Asset-Dokumentation.",
+      "datei": "system/hardware-inventar.ps1",
+      "tags": [
+        "Inventar",
+        "Hardware",
+        "CSV"
+      ],
+      "adminRechte": false,
+      "voraussetzung": "WMI-Zugriff auf die Zielsysteme"
+    },
+    {
+      "id": "sys-dienste-ueberwachen",
+      "kategorie": "system",
+      "titel": "Kritische Dienste überwachen und starten",
+      "beschreibung": "Prüft eine Dienstliste, startet gestoppte Dienste automatisch neu und protokolliert jede Aktion. Mit -NurPruefen als reine Kontrolle.",
+      "datei": "system/dienste-ueberwachen.ps1",
+      "tags": [
+        "Dienste",
+        "Automatisierung",
+        "Logging"
+      ],
+      "adminRechte": true,
+      "voraussetzung": "Rechte zum Starten von Diensten"
+    },
+    {
+      "id": "sys-ereignisprotokoll",
+      "kategorie": "system",
+      "titel": "Kritische Ereignisse im Ereignisprotokoll",
+      "beschreibung": "Sammelt Fehler und kritische Meldungen aus System- und Anwendungsprotokoll, gruppiert nach Quelle und Ereignis-ID.",
+      "datei": "system/ereignisprotokoll-kritisch.ps1",
+      "tags": [
+        "Ereignisprotokoll",
+        "Fehleranalyse"
+      ],
+      "adminRechte": true,
+      "voraussetzung": "Windows 10/11, Server 2016+"
+    },
+    {
+      "id": "sys-letzter-neustart",
+      "kategorie": "system",
+      "titel": "Letzter Neustart und Betriebsdauer",
+      "beschreibung": "Zeigt Startzeitpunkt und Laufzeit eines oder mehrerer Systeme und empfiehlt ab einer einstellbaren Grenze einen Neustart.",
+      "datei": "system/letzter-neustart.ps1",
+      "tags": [
+        "Uptime",
+        "Neustart",
+        "Mehrere Systeme"
+      ],
+      "adminRechte": false,
+      "voraussetzung": "Windows 10/11, Server 2016+"
+    },
+    {
+      "id": "sys-patch-compliance",
+      "kategorie": "system",
+      "titel": "Patch-Compliance-Bericht",
+      "beschreibung": "Ermittelt je Computer Patchstand, ausstehende Updates, davon sicherheitsrelevant, und einen nötigen Neustart. Daraus entsteht eine Einstufung je System und eine Gesamtquote.",
+      "datei": "system/patch-compliance-bericht.ps1",
+      "tags": [
+        "Windows Update",
+        "Compliance",
+        "Mehrere Systeme",
+        "HTML"
+      ],
+      "adminRechte": true,
+      "voraussetzung": "WinRM auf den Zielsystemen"
+    },
+    {
+      "id": "sys-windows-update",
+      "kategorie": "system",
+      "titel": "Patchstand und ausstehende Updates",
+      "beschreibung": "Zeigt die zuletzt installierten Hotfixes, sucht über die Windows-Update-Schnittstelle nach ausstehenden Updates und meldet einen nötigen Neustart.",
+      "datei": "system/windows-update-status.ps1",
+      "tags": [
+        "Windows Update",
+        "Patch-Compliance"
+      ],
+      "adminRechte": true,
+      "voraussetzung": "Windows-Update-Dienst verfügbar"
     },
     {
       "id": "sys-top-prozesse",
@@ -147,39 +184,126 @@
       "titel": "Prozesse mit höchster CPU- und RAM-Last",
       "beschreibung": "Misst die CPU-Auslastung über zwei Messpunkte statt nur die kumulierte Rechenzeit – erste Anlaufstelle bei Leistungsproblemen.",
       "datei": "system/top-prozesse.ps1",
-      "tags": ["Leistung", "Prozesse", "Fehlersuche"],
-      "adminRechte": false,
-      "voraussetzung": "Windows 10/11, Server 2016+"
-    },
-
-    {
-      "id": "net-schnellcheck",
-      "kategorie": "netzwerk",
-      "titel": "Netzwerkdiagnose in einem Durchlauf",
-      "beschreibung": "Arbeitet die Fehlersuche von unten nach oben ab: Adapter, IP, Gateway, DNS-Server, Namensauflösung, Internet. Der erste Fehler zeigt die Ursache.",
-      "datei": "netzwerk/netzwerk-schnellcheck.ps1",
-      "tags": ["Diagnose", "Fehlersuche", "DNS"],
+      "tags": [
+        "Leistung",
+        "Prozesse",
+        "Fehlersuche"
+      ],
       "adminRechte": false,
       "voraussetzung": "Windows 10/11, Server 2016+"
     },
     {
-      "id": "net-adapter-status",
-      "kategorie": "netzwerk",
-      "titel": "Netzwerkadapter und IP-Konfiguration",
-      "beschreibung": "Verbindet Adapterstatus, IP-Konfiguration, Gateway, DNS-Server und Treiberdaten zu einer vollständigen Übersicht je Adapter.",
-      "datei": "netzwerk/netzwerkadapter-status.ps1",
-      "tags": ["Adapter", "IP-Konfiguration", "DHCP"],
+      "id": "sys-software-inventar",
+      "kategorie": "system",
+      "titel": "Software-Inventar erstellen",
+      "beschreibung": "Liest die installierten Programme aus der Registrierung – schnell und ohne die MSI-Nebenwirkungen von Win32_Product. Optional als CSV.",
+      "datei": "system/software-inventar.ps1",
+      "tags": [
+        "Inventar",
+        "Software",
+        "CSV"
+      ],
       "adminRechte": false,
       "voraussetzung": "Windows 10/11, Server 2016+"
     },
     {
-      "id": "net-port-test",
-      "kategorie": "netzwerk",
-      "titel": "TCP-Ports auf Erreichbarkeit testen",
-      "beschreibung": "Testet eine Matrix aus Zielen und Ports mit einstellbarem Zeitlimit und benennt die bekannten Dienste – ideal nach Firewall-Änderungen.",
-      "datei": "netzwerk/port-test.ps1",
-      "tags": ["Ports", "Konnektivität", "Firewall"],
+      "id": "sys-software-netzwerk",
+      "kategorie": "system",
+      "titel": "Software-Inventar über mehrere Computer",
+      "beschreibung": "Führt die Inventare mehrerer Rechner zusammen, zeigt die Verteilung je Programm und Version, findet uneinheitliche Versionsstände und sucht gezielt nach einem Produkt.",
+      "datei": "system/software-inventar-netzwerk.ps1",
+      "tags": [
+        "Inventar",
+        "Software",
+        "Lizenzen",
+        "Mehrere Systeme"
+      ],
+      "adminRechte": true,
+      "voraussetzung": "WinRM auf den Zielsystemen"
+    },
+    {
+      "id": "sys-dienste-starttyp",
+      "kategorie": "system",
+      "titel": "Starttypen der Dienste gegen Soll prüfen",
+      "beschreibung": "Vergleicht den Starttyp wichtiger Dienste mit einer Soll-Vorgabe und deckt Abweichungen auf, die erst beim nächsten Neustart auffallen würden.",
+      "datei": "system/dienste-starttyp.ps1",
+      "tags": [
+        "Dienste",
+        "Konfiguration",
+        "Compliance"
+      ],
       "adminRechte": false,
+      "voraussetzung": "Windows 10/11, Server 2016+"
+    },
+    {
+      "id": "sys-systemdateien-pruefen",
+      "kategorie": "system",
+      "titel": "Systemdateien prüfen und reparieren",
+      "beschreibung": "Führt DISM und SFC in der empfohlenen Reihenfolge aus und protokolliert das Ergebnis. Mit -NurPruefen wird nichts verändert.",
+      "datei": "system/systemdateien-pruefen.ps1",
+      "tags": [
+        "SFC",
+        "DISM",
+        "Reparatur"
+      ],
+      "adminRechte": true,
+      "voraussetzung": "Laufzeit 10–40 Minuten"
+    },
+    {
+      "id": "net-firewall-regeln",
+      "kategorie": "netzwerk",
+      "titel": "Aktive Firewall-Regeln auswerten",
+      "beschreibung": "Zeigt Profilstatus und alle aktiven Erlaubnisregeln für eingehenden Verkehr mit Port, Protokoll, Quelle und Programm.",
+      "datei": "netzwerk/firewall-regeln.ps1",
+      "tags": [
+        "Firewall",
+        "Regeln",
+        "Audit"
+      ],
+      "adminRechte": true,
+      "voraussetzung": "Modul NetSecurity"
+    },
+    {
+      "id": "net-dhcp-auslastung",
+      "kategorie": "netzwerk",
+      "titel": "DHCP-Bereiche und Auslastung",
+      "beschreibung": "Wertet jeden DHCP-Bereich aus: vergebene und freie Adressen, Auslastung in Prozent sowie abgelaufene Leases.",
+      "datei": "netzwerk/dhcp-scope-auslastung.ps1",
+      "tags": [
+        "DHCP",
+        "Kapazität",
+        "Server"
+      ],
+      "adminRechte": true,
+      "voraussetzung": "Modul DhcpServer (RSAT)"
+    },
+    {
+      "id": "net-dns-eintraege",
+      "kategorie": "netzwerk",
+      "titel": "DNS-Einträge einer Zone prüfen",
+      "beschreibung": "Listet alle Einträge einer Zone nach Typ, prüft die SRV-Einträge für die Domänenanmeldung und findet veraltete A-Einträge, deren Ziel nicht mehr antwortet.",
+      "datei": "netzwerk/dns-eintraege-pruefen.ps1",
+      "tags": [
+        "DNS",
+        "Zonen",
+        "SRV-Einträge",
+        "Aufräumen"
+      ],
+      "adminRechte": true,
+      "voraussetzung": "Modul DnsServer (RSAT) für die Zonenprüfung"
+    },
+    {
+      "id": "net-offene-ports",
+      "kategorie": "netzwerk",
+      "titel": "Lauschende Ports mit Prozesszuordnung",
+      "beschreibung": "Listet alle lauschenden TCP-Ports und ordnet jedem Port den verantwortlichen Prozess samt Programmpfad zu.",
+      "datei": "netzwerk/offene-ports.ps1",
+      "tags": [
+        "Ports",
+        "Prozesse",
+        "Sicherheit"
+      ],
+      "adminRechte": true,
       "voraussetzung": "Windows 10/11, Server 2016+"
     },
     {
@@ -188,38 +312,39 @@
       "titel": "Namensauflösung gegen mehrere DNS-Server",
       "beschreibung": "Löst Namen parallel über mehrere DNS-Server auf und meldet abweichende Antworten – ein Hinweis auf veraltete Zonen oder falsche Weiterleitungen.",
       "datei": "netzwerk/dns-aufloesung-testen.ps1",
-      "tags": ["DNS", "Diagnose"],
+      "tags": [
+        "DNS",
+        "Diagnose"
+      ],
       "adminRechte": false,
       "voraussetzung": "Modul DnsClient"
     },
     {
-      "id": "net-dns-server",
+      "id": "net-adapter-status",
       "kategorie": "netzwerk",
-      "titel": "Windows-DNS-Server prüfen",
-      "beschreibung": "Prüft Dienststatus, Zonen, Weiterleitungen und die Namensauflösung eines DNS-Servers – für Domänencontroller und dedizierte DNS-Server.",
-      "datei": "netzwerk/dns-server-pruefen.ps1",
-      "tags": ["DNS", "Server", "Zonen"],
-      "adminRechte": true,
-      "voraussetzung": "Modul DnsServer (RSAT)"
+      "titel": "Netzwerkadapter und IP-Konfiguration",
+      "beschreibung": "Verbindet Adapterstatus, IP-Konfiguration, Gateway, DNS-Server und Treiberdaten zu einer vollständigen Übersicht je Adapter.",
+      "datei": "netzwerk/netzwerkadapter-status.ps1",
+      "tags": [
+        "Adapter",
+        "IP-Konfiguration",
+        "DHCP"
+      ],
+      "adminRechte": false,
+      "voraussetzung": "Windows 10/11, Server 2016+"
     },
     {
-      "id": "net-dhcp-auslastung",
+      "id": "net-schnellcheck",
       "kategorie": "netzwerk",
-      "titel": "DHCP-Bereiche und Auslastung",
-      "beschreibung": "Wertet jeden DHCP-Bereich aus: vergebene und freie Adressen, Auslastung in Prozent sowie abgelaufene Leases.",
-      "datei": "netzwerk/dhcp-scope-auslastung.ps1",
-      "tags": ["DHCP", "Kapazität", "Server"],
-      "adminRechte": true,
-      "voraussetzung": "Modul DhcpServer (RSAT)"
-    },
-    {
-      "id": "net-offene-ports",
-      "kategorie": "netzwerk",
-      "titel": "Lauschende Ports mit Prozesszuordnung",
-      "beschreibung": "Listet alle lauschenden TCP-Ports und ordnet jedem Port den verantwortlichen Prozess samt Programmpfad zu.",
-      "datei": "netzwerk/offene-ports.ps1",
-      "tags": ["Ports", "Prozesse", "Sicherheit"],
-      "adminRechte": true,
+      "titel": "Netzwerkdiagnose in einem Durchlauf",
+      "beschreibung": "Arbeitet die Fehlersuche von unten nach oben ab: Adapter, IP, Gateway, DNS-Server, Namensauflösung, Internet. Der erste Fehler zeigt die Ursache.",
+      "datei": "netzwerk/netzwerk-schnellcheck.ps1",
+      "tags": [
+        "Diagnose",
+        "Fehlersuche",
+        "DNS"
+      ],
+      "adminRechte": false,
       "voraussetzung": "Windows 10/11, Server 2016+"
     },
     {
@@ -228,19 +353,13 @@
       "titel": "Route verfolgen und Latenz messen",
       "beschreibung": "Verfolgt den Netzwerkpfad zu einem Ziel, misst die Latenz je Abschnitt und hebt den Sprung mit dem größten Latenzzuwachs hervor.",
       "datei": "netzwerk/routenverfolgung.ps1",
-      "tags": ["Latenz", "Routing", "Diagnose"],
+      "tags": [
+        "Latenz",
+        "Routing",
+        "Diagnose"
+      ],
       "adminRechte": false,
       "voraussetzung": "ICMP muss erlaubt sein"
-    },
-    {
-      "id": "net-firewall-regeln",
-      "kategorie": "netzwerk",
-      "titel": "Aktive Firewall-Regeln auswerten",
-      "beschreibung": "Zeigt Profilstatus und alle aktiven Erlaubnisregeln für eingehenden Verkehr mit Port, Protokoll, Quelle und Programm.",
-      "datei": "netzwerk/firewall-regeln.ps1",
-      "tags": ["Firewall", "Regeln", "Audit"],
-      "adminRechte": true,
-      "voraussetzung": "Modul NetSecurity"
     },
     {
       "id": "net-smb-freigaben",
@@ -248,100 +367,204 @@
       "titel": "SMB-Freigaben und Berechtigungen",
       "beschreibung": "Dokumentiert alle Freigaben mit Freigabe- und NTFS-Berechtigungen sowie den aktuell verbundenen Sitzungen.",
       "datei": "netzwerk/smb-freigaben.ps1",
-      "tags": ["SMB", "Freigaben", "Berechtigungen"],
+      "tags": [
+        "SMB",
+        "Freigaben",
+        "Berechtigungen"
+      ],
       "adminRechte": true,
       "voraussetzung": "Modul SmbShare"
     },
-
     {
-      "id": "sec-audit-gesamt",
-      "kategorie": "security",
-      "titel": "Vollständige Sicherheitsprüfung mit Bewertung",
-      "beschreibung": "Prüft Firewall, Defender, BitLocker, Konten, RDP, Patchstand, SMBv1, Autostart und Anmeldefehler in einem Durchlauf und vergibt eine Punktzahl von 0 bis 10.",
-      "datei": "security/security-audit-gesamt.ps1",
-      "tags": ["Audit", "Härtung", "Bewertung", "CSV"],
-      "adminRechte": true,
+      "id": "net-port-test",
+      "kategorie": "netzwerk",
+      "titel": "TCP-Ports auf Erreichbarkeit testen",
+      "beschreibung": "Testet eine Matrix aus Zielen und Ports mit einstellbarem Zeitlimit und benennt die bekannten Dienste – ideal nach Firewall-Änderungen.",
+      "datei": "netzwerk/port-test.ps1",
+      "tags": [
+        "Ports",
+        "Konnektivität",
+        "Firewall"
+      ],
+      "adminRechte": false,
       "voraussetzung": "Windows 10/11, Server 2016+"
     },
     {
-      "id": "sec-defender",
-      "kategorie": "security",
-      "titel": "Microsoft Defender – Status und Ausschlüsse",
-      "beschreibung": "Zeigt Echtzeitschutz, Signaturstand, Manipulationsschutz und die Ausschlussliste – Ausschlüsse sind ein beliebtes Angriffsziel.",
-      "datei": "security/defender-status.ps1",
-      "tags": ["Defender", "Virenschutz", "Ausschlüsse"],
+      "id": "net-dns-server",
+      "kategorie": "netzwerk",
+      "titel": "Windows-DNS-Server prüfen",
+      "beschreibung": "Prüft Dienststatus, Zonen, Weiterleitungen und die Namensauflösung eines DNS-Servers – für Domänencontroller und dedizierte DNS-Server.",
+      "datei": "netzwerk/dns-server-pruefen.ps1",
+      "tags": [
+        "DNS",
+        "Server",
+        "Zonen"
+      ],
       "adminRechte": true,
-      "voraussetzung": "Modul Defender"
+      "voraussetzung": "Modul DnsServer (RSAT)"
     },
     {
-      "id": "sec-firewall",
-      "kategorie": "security",
-      "titel": "Firewall-Profile und Standardverhalten",
-      "beschreibung": "Prüft für Domänen-, privates und öffentliches Profil, ob die Firewall aktiv ist, welches Standardverhalten gilt und ob protokolliert wird.",
-      "datei": "security/firewall-status.ps1",
-      "tags": ["Firewall", "Härtung"],
-      "adminRechte": true,
-      "voraussetzung": "Modul NetSecurity"
+      "id": "kon-ad-benutzer-anlegen",
+      "kategorie": "konten",
+      "titel": "AD-Benutzer aus CSV anlegen",
+      "beschreibung": "Onboarding im Stapel: legt AD-Konten an, füllt Stammdaten und Vorgesetzten, setzt Erstkennwörter und ordnet Gruppen zu. Ohne -Anwenden reiner Testlauf.",
+      "datei": "konten/ad-benutzer-anlegen.ps1",
+      "tags": [
+        "Active Directory",
+        "Onboarding",
+        "CSV",
+        "Testlauf"
+      ],
+      "adminRechte": false,
+      "voraussetzung": "Modul ActiveDirectory (RSAT), Rechte in der Ziel-OU"
     },
     {
-      "id": "sec-bitlocker",
-      "kategorie": "security",
-      "titel": "BitLocker-Verschlüsselung prüfen",
-      "beschreibung": "Zeigt Schutzstatus, Verschlüsselungsverfahren und hinterlegte Schlüsselschutzvorrichtungen aller Laufwerke – ohne Wiederherstellungskennwörter auszugeben.",
-      "datei": "security/bitlocker-status.ps1",
-      "tags": ["BitLocker", "Verschlüsselung", "Compliance"],
+      "id": "kon-ad-computer-os",
+      "kategorie": "konten",
+      "titel": "AD-Computer und Betriebssysteme",
+      "beschreibung": "Verteilung der Betriebssysteme und Build-Stände über alle Computerkonten, getrennt nach Servern und Arbeitsplätzen, plus Systeme ohne Herstellerunterstützung.",
+      "datei": "konten/ad-computer-betriebssysteme.ps1",
+      "tags": [
+        "Active Directory",
+        "Inventar",
+        "Support-Ende",
+        "HTML"
+      ],
+      "adminRechte": false,
+      "voraussetzung": "Modul ActiveDirectory (RSAT)"
+    },
+    {
+      "id": "kon-ad-gruppen",
+      "kategorie": "konten",
+      "titel": "AD-Gruppenmitgliedschaften prüfen",
+      "beschreibung": "Drei Blickrichtungen: wer ist in dieser Gruppe (auch verschachtelt), in welchen Gruppen ist dieser Benutzer, und welche Gruppen sind leer oder auffällig groß.",
+      "datei": "konten/ad-gruppenmitgliedschaften.ps1",
+      "tags": [
+        "Active Directory",
+        "Gruppen",
+        "Berechtigungen",
+        "CSV"
+      ],
+      "adminRechte": false,
+      "voraussetzung": "Modul ActiveDirectory (RSAT)"
+    },
+    {
+      "id": "kon-ad-deaktiviert",
+      "kategorie": "konten",
+      "titel": "AD: Deaktivierte und abgelaufene Konten",
+      "beschreibung": "Findet deaktivierte, abgelaufene und gesperrte Konten – und vor allem deaktivierte Konten, die noch in privilegierten Gruppen stehen. Löscht nichts, schlägt nur vor.",
+      "datei": "konten/ad-deaktivierte-konten.ps1",
+      "tags": [
+        "Active Directory",
+        "Aufräumen",
+        "Audit",
+        "CSV"
+      ],
+      "adminRechte": false,
+      "voraussetzung": "Modul ActiveDirectory (RSAT)"
+    },
+    {
+      "id": "sec-ad-kennwortablauf",
+      "kategorie": "konten",
+      "titel": "Bald ablaufende AD-Kennwörter",
+      "beschreibung": "Berechnet anhand der Domänenrichtlinie das Ablaufdatum jedes Kennworts und listet alle Konten, die in den nächsten Tagen handeln müssen.",
+      "datei": "konten/ad-kennwortablauf.ps1",
+      "tags": [
+        "Active Directory",
+        "Kennwörter",
+        "Servicedesk",
+        "CSV"
+      ],
+      "adminRechte": false,
+      "voraussetzung": "Modul ActiveDirectory (RSAT)"
+    },
+    {
+      "id": "sec-ad-inaktive-benutzer",
+      "kategorie": "konten",
+      "titel": "Inaktive AD-Konten finden",
+      "beschreibung": "Meldet Benutzer- und Computerkonten ohne Anmeldung seit X Tagen sowie abgelaufene und gesperrte Konten – ein wiederkehrender Auditbefund.",
+      "datei": "konten/ad-inaktive-benutzer.ps1",
+      "tags": [
+        "Active Directory",
+        "Konten",
+        "Audit",
+        "CSV"
+      ],
+      "adminRechte": false,
+      "voraussetzung": "Modul ActiveDirectory (RSAT)"
+    },
+    {
+      "id": "kon-aktivieren-deaktivieren",
+      "kategorie": "konten",
+      "titel": "Konten aktivieren oder deaktivieren",
+      "beschreibung": "Deckt Aus- und Wiedereintritt ab: Konto sperren, aus Gruppen entfernen, Vermerk setzen und in eine OU verschieben. Lokal oder im AD. Eingebaute Konten bleiben geschützt.",
+      "datei": "konten/konten-aktivieren-deaktivieren.ps1",
+      "tags": [
+        "Benutzer",
+        "Offboarding",
+        "Active Directory",
+        "Testlauf"
+      ],
       "adminRechte": true,
-      "voraussetzung": "Modul BitLocker"
+      "voraussetzung": "Optional: Modul ActiveDirectory (RSAT)"
     },
     {
       "id": "sec-lokale-admins",
-      "kategorie": "security",
+      "kategorie": "konten",
       "titel": "Lokale Administratoren auflisten",
       "beschreibung": "Listet die Mitglieder der Administratorengruppe über die SID statt den Gruppennamen – damit sprachunabhängig und auch remote nutzbar.",
-      "datei": "security/lokale-administratoren.ps1",
-      "tags": ["Konten", "Berechtigungen", "Audit"],
+      "datei": "konten/lokale-administratoren.ps1",
+      "tags": [
+        "Konten",
+        "Berechtigungen",
+        "Audit"
+      ],
       "adminRechte": true,
       "voraussetzung": "Für Remote-Abfragen: WinRM"
     },
     {
-      "id": "sec-gastkonto",
-      "kategorie": "security",
-      "titel": "Gast- und Standardkonten prüfen",
-      "beschreibung": "Ermittelt Gastkonto und eingebauten Administrator über ihre SID-Endungen und meldet, wenn sie aktiviert sind oder das Kennwort nie abläuft.",
-      "datei": "security/gastkonto-pruefen.ps1",
-      "tags": ["Konten", "Härtung"],
+      "id": "kon-benutzer-anlegen",
+      "kategorie": "konten",
+      "titel": "Lokale Benutzer anlegen",
+      "beschreibung": "Legt lokale Konten einzeln oder als Stapel aus einer CSV an, erzeugt sichere Kennwörter und nimmt die Konten in Gruppen auf. Ohne -Anwenden reiner Testlauf.",
+      "datei": "konten/benutzer-anlegen.ps1",
+      "tags": [
+        "Benutzer",
+        "Anlegen",
+        "CSV",
+        "Testlauf"
+      ],
       "adminRechte": true,
       "voraussetzung": "Modul Microsoft.PowerShell.LocalAccounts"
     },
     {
-      "id": "sec-rdp",
-      "kategorie": "security",
-      "titel": "RDP-Konfiguration prüfen",
-      "beschreibung": "Prüft, ob RDP aktiv ist, auf welchem Port es lauscht, ob NLA erzwungen wird, wer zugreifen darf und welche Firewall-Regeln offen sind.",
-      "datei": "security/rdp-konfiguration.ps1",
-      "tags": ["RDP", "NLA", "Fernzugriff"],
+      "id": "kon-gruppen-lokal",
+      "kategorie": "konten",
+      "titel": "Lokale Gruppen und Mitglieder",
+      "beschreibung": "Zeigt dieselben Daten aus zwei Richtungen: wer ist in welcher Gruppe – und in welchen Gruppen ist ein Konto überall Mitglied. Auch über mehrere Computer.",
+      "datei": "konten/gruppenmitgliedschaften-lokal.ps1",
+      "tags": [
+        "Gruppen",
+        "Berechtigungen",
+        "Mehrere Systeme"
+      ],
       "adminRechte": true,
-      "voraussetzung": "Lesezugriff auf HKLM"
+      "voraussetzung": "Für Remote-Abfragen: WinRM"
     },
     {
-      "id": "sec-fehlanmeldungen",
-      "kategorie": "security",
-      "titel": "Fehlgeschlagene Anmeldungen auswerten",
-      "beschreibung": "Wertet Ereignis-ID 4625 aus, gruppiert nach Konto, Quelle und Ursache und erkennt Brute Force sowie Password Spraying.",
-      "datei": "security/fehlgeschlagene-anmeldungen.ps1",
-      "tags": ["Anmeldungen", "Angriffserkennung", "Ereignisprotokoll"],
+      "id": "kon-lokale-konten",
+      "kategorie": "konten",
+      "titel": "Lokale Konten und Aufräumkandidaten",
+      "beschreibung": "Listet alle lokalen Konten mit letzter Anmeldung und Kennwortalter und hebt hervor, was aufgeräumt gehört: nie angemeldet, lange inaktiv, Kennwort ohne Ablauf, keine Kennwortpflicht.",
+      "datei": "konten/lokale-konten-bericht.ps1",
+      "tags": [
+        "Benutzer",
+        "Aufräumen",
+        "Audit",
+        "CSV"
+      ],
       "adminRechte": true,
-      "voraussetzung": "Zugriff auf das Sicherheitsprotokoll"
-    },
-    {
-      "id": "sec-anmeldungen",
-      "kategorie": "security",
-      "titel": "Letzte erfolgreiche Anmeldungen",
-      "beschreibung": "Wertet Ereignis-ID 4624 aus und blendet System- und Dienstanmeldungen aus, sodass nur echte Benutzeranmeldungen übrig bleiben.",
-      "datei": "security/letzte-anmeldungen.ps1",
-      "tags": ["Anmeldungen", "Nachvollziehbarkeit"],
-      "adminRechte": true,
-      "voraussetzung": "Zugriff auf das Sicherheitsprotokoll"
+      "voraussetzung": "Für Remote-Abfragen: WinRM"
     },
     {
       "id": "sec-autostart",
@@ -349,19 +572,67 @@
       "titel": "Autostart-Programme prüfen",
       "beschreibung": "Durchsucht Run-Schlüssel und Autostart-Ordner und markiert Einträge außerhalb der üblichen Programmverzeichnisse – ein typischer Persistenzmechanismus.",
       "datei": "security/autostart-programme.ps1",
-      "tags": ["Autostart", "Persistenz", "Audit"],
+      "tags": [
+        "Autostart",
+        "Persistenz",
+        "Audit"
+      ],
       "adminRechte": false,
       "voraussetzung": "Windows 10/11, Server 2016+"
     },
     {
-      "id": "sec-verdaechtige-dienste",
+      "id": "sec-bitlocker",
       "kategorie": "security",
-      "titel": "Verdächtige Dienste aufspüren",
-      "beschreibung": "Sucht Dienste mit Pfaden außerhalb der Systemverzeichnisse, ungequoteten Pfaden (Rechteausweitung) und fehlender digitaler Signatur.",
-      "datei": "security/verdaechtige-dienste.ps1",
-      "tags": ["Dienste", "Persistenz", "Signatur"],
+      "titel": "BitLocker-Verschlüsselung prüfen",
+      "beschreibung": "Zeigt Schutzstatus, Verschlüsselungsverfahren und hinterlegte Schlüsselschutzvorrichtungen aller Laufwerke – ohne Wiederherstellungskennwörter auszugeben.",
+      "datei": "security/bitlocker-status.ps1",
+      "tags": [
+        "BitLocker",
+        "Verschlüsselung",
+        "Compliance"
+      ],
       "adminRechte": true,
-      "voraussetzung": "Windows 10/11, Server 2016+"
+      "voraussetzung": "Modul BitLocker"
+    },
+    {
+      "id": "sec-fehlanmeldungen",
+      "kategorie": "security",
+      "titel": "Fehlgeschlagene Anmeldungen auswerten",
+      "beschreibung": "Wertet Ereignis-ID 4625 aus, gruppiert nach Konto, Quelle und Ursache und erkennt Brute Force sowie Password Spraying.",
+      "datei": "security/fehlgeschlagene-anmeldungen.ps1",
+      "tags": [
+        "Anmeldungen",
+        "Angriffserkennung",
+        "Ereignisprotokoll"
+      ],
+      "adminRechte": true,
+      "voraussetzung": "Zugriff auf das Sicherheitsprotokoll"
+    },
+    {
+      "id": "sec-firewall",
+      "kategorie": "security",
+      "titel": "Firewall-Profile und Standardverhalten",
+      "beschreibung": "Prüft für Domänen-, privates und öffentliches Profil, ob die Firewall aktiv ist, welches Standardverhalten gilt und ob protokolliert wird.",
+      "datei": "security/firewall-status.ps1",
+      "tags": [
+        "Firewall",
+        "Härtung"
+      ],
+      "adminRechte": true,
+      "voraussetzung": "Modul NetSecurity"
+    },
+    {
+      "id": "sec-gastkonto",
+      "kategorie": "security",
+      "titel": "Gast- und Standardkonten prüfen",
+      "beschreibung": "Ermittelt Gastkonto und eingebauten Administrator über ihre SID-Endungen und meldet, wenn sie aktiviert sind oder das Kennwort nie abläuft.",
+      "datei": "security/gastkonto-pruefen.ps1",
+      "tags": [
+        "Konten",
+        "Härtung"
+      ],
+      "adminRechte": true,
+      "voraussetzung": "Modul Microsoft.PowerShell.LocalAccounts"
     },
     {
       "id": "sec-kennwortrichtlinie",
@@ -369,19 +640,40 @@
       "titel": "Kennwort- und Sperrrichtlinie prüfen",
       "beschreibung": "Liest die lokale Richtlinie aus, vergleicht sie mit empfohlenen Mindestwerten und ergänzt in einer Domäne die Standard-Domänenrichtlinie.",
       "datei": "security/kennwortrichtlinie.ps1",
-      "tags": ["Kennwörter", "Richtlinie", "Compliance"],
+      "tags": [
+        "Kennwörter",
+        "Richtlinie",
+        "Compliance"
+      ],
       "adminRechte": true,
       "voraussetzung": "Optional: Modul ActiveDirectory"
     },
     {
-      "id": "sec-ad-inaktive-benutzer",
+      "id": "sec-anmeldungen",
       "kategorie": "security",
-      "titel": "Inaktive AD-Konten finden",
-      "beschreibung": "Meldet Benutzer- und Computerkonten ohne Anmeldung seit X Tagen sowie abgelaufene und gesperrte Konten – ein wiederkehrender Auditbefund.",
-      "datei": "security/ad-inaktive-benutzer.ps1",
-      "tags": ["Active Directory", "Konten", "Audit", "CSV"],
-      "adminRechte": false,
-      "voraussetzung": "Modul ActiveDirectory (RSAT)"
+      "titel": "Letzte erfolgreiche Anmeldungen",
+      "beschreibung": "Wertet Ereignis-ID 4624 aus und blendet System- und Dienstanmeldungen aus, sodass nur echte Benutzeranmeldungen übrig bleiben.",
+      "datei": "security/letzte-anmeldungen.ps1",
+      "tags": [
+        "Anmeldungen",
+        "Nachvollziehbarkeit"
+      ],
+      "adminRechte": true,
+      "voraussetzung": "Zugriff auf das Sicherheitsprotokoll"
+    },
+    {
+      "id": "sec-defender",
+      "kategorie": "security",
+      "titel": "Microsoft Defender – Status und Ausschlüsse",
+      "beschreibung": "Zeigt Echtzeitschutz, Signaturstand, Manipulationsschutz und die Ausschlussliste – Ausschlüsse sind ein beliebtes Angriffsziel.",
+      "datei": "security/defender-status.ps1",
+      "tags": [
+        "Defender",
+        "Virenschutz",
+        "Ausschlüsse"
+      ],
+      "adminRechte": true,
+      "voraussetzung": "Modul Defender"
     },
     {
       "id": "sec-ad-domaenen-admins",
@@ -389,19 +681,71 @@
       "titel": "Privilegierte AD-Gruppen prüfen",
       "beschreibung": "Wertet Domänen-, Organisations- und Schema-Admins sowie Operator-Gruppen rekursiv aus und hebt Konten mit nie ablaufendem Kennwort hervor.",
       "datei": "security/ad-domaenen-admins.ps1",
-      "tags": ["Active Directory", "Privilegien", "Audit"],
+      "tags": [
+        "Active Directory",
+        "Privilegien",
+        "Audit"
+      ],
       "adminRechte": false,
       "voraussetzung": "Modul ActiveDirectory (RSAT)"
     },
     {
-      "id": "sec-ad-kennwortablauf",
+      "id": "sec-rdp",
       "kategorie": "security",
-      "titel": "Bald ablaufende AD-Kennwörter",
-      "beschreibung": "Berechnet anhand der Domänenrichtlinie das Ablaufdatum jedes Kennworts und listet alle Konten, die in den nächsten Tagen handeln müssen.",
-      "datei": "security/ad-kennwortablauf.ps1",
-      "tags": ["Active Directory", "Kennwörter", "Servicedesk", "CSV"],
-      "adminRechte": false,
-      "voraussetzung": "Modul ActiveDirectory (RSAT)"
+      "titel": "RDP-Konfiguration prüfen",
+      "beschreibung": "Prüft, ob RDP aktiv ist, auf welchem Port es lauscht, ob NLA erzwungen wird, wer zugreifen darf und welche Firewall-Regeln offen sind.",
+      "datei": "security/rdp-konfiguration.ps1",
+      "tags": [
+        "RDP",
+        "NLA",
+        "Fernzugriff"
+      ],
+      "adminRechte": true,
+      "voraussetzung": "Lesezugriff auf HKLM"
+    },
+    {
+      "id": "sec-rdp-verlauf",
+      "kategorie": "security",
+      "titel": "RDP-Sitzungsverlauf auswerten",
+      "beschreibung": "Führt die verstreuten RDP-Spuren zusammen: angenommene Verbindungen mit Quell-IP, An- und Abmeldungen, fehlgeschlagene RDP-Anmeldungen sowie Zugriffe außerhalb der Arbeitszeit.",
+      "datei": "security/rdp-sitzungsverlauf.ps1",
+      "tags": [
+        "RDP",
+        "Nachvollziehbarkeit",
+        "Angriffserkennung",
+        "CSV"
+      ],
+      "adminRechte": true,
+      "voraussetzung": "Zugriff auf Sicherheits- und TerminalServices-Protokolle"
+    },
+    {
+      "id": "sec-verdaechtige-dienste",
+      "kategorie": "security",
+      "titel": "Verdächtige Dienste aufspüren",
+      "beschreibung": "Sucht Dienste mit Pfaden außerhalb der Systemverzeichnisse, ungequoteten Pfaden (Rechteausweitung) und fehlender digitaler Signatur.",
+      "datei": "security/verdaechtige-dienste.ps1",
+      "tags": [
+        "Dienste",
+        "Persistenz",
+        "Signatur"
+      ],
+      "adminRechte": true,
+      "voraussetzung": "Windows 10/11, Server 2016+"
+    },
+    {
+      "id": "sec-audit-gesamt",
+      "kategorie": "security",
+      "titel": "Vollständige Sicherheitsprüfung mit Bewertung",
+      "beschreibung": "Prüft Firewall, Defender, BitLocker, Konten, RDP, Patchstand, SMBv1, Autostart und Anmeldefehler in einem Durchlauf und vergibt eine Punktzahl von 0 bis 10.",
+      "datei": "security/security-audit-gesamt.ps1",
+      "tags": [
+        "Audit",
+        "Härtung",
+        "Bewertung",
+        "CSV"
+      ],
+      "adminRechte": true,
+      "voraussetzung": "Windows 10/11, Server 2016+"
     }
   ]
 }

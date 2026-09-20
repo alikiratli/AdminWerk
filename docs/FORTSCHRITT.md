@@ -5,6 +5,125 @@ wurden und was als Nächstes ansteht.
 
 ---
 
+## Tag 2 — 20.09.2026
+
+### Ergebnis
+
+Der Katalog deckt jetzt alle zwölf geplanten Themenbereiche vollständig ab: **51 Skripte in
+vier Kategorien**. Neu hinzugekommen ist die Kategorie **Konten**.
+
+### Ausgangspunkt: Lückenanalyse
+
+Der bestehende Katalog wurde gegen die zwölf Themenbereiche geprüft, die das Projekt abdecken
+soll. Sechs Bereiche waren vollständig, sechs hatten Lücken:
+
+| Bereich | Stand Tag 1 | Lücke |
+|---|---|---|
+| Disk und Systemgesundheit | vollständig | — |
+| Dienstverwaltung | 3 von 4 | zentraler Bericht über mehrere Computer |
+| Windows Update | 4 von 5 | Patch-Compliance über den Bestand |
+| Benutzer und Gruppen | 2 von 6 | Anlegen, Sperren, Gruppenbericht |
+| Sicherheitsprüfungen | vollständig | — |
+| RDP-Verwaltung | 4 von 6 | Sitzungsverlauf, fehlgeschlagene RDP-Logins |
+| Netzwerkdiagnose | vollständig | — |
+| DNS / DHCP | 5 von 6 | Prüfung einzelner DNS-Einträge |
+| Active Directory | 6 von 9 | Computer-Betriebssysteme, Gruppenaudit, deaktivierte Konten |
+| Software-Inventar | teilweise | Sammlung über mehrere Computer |
+| Hardware-Inventar | vollständig | — |
+| Geplante Aufgaben | vollständig | — |
+
+### Neue Kategorie: Konten
+
+Benutzer- und Gruppenverwaltung passte weder unter „System" noch sauber unter „Security" —
+Konten anzulegen ist Betrieb, nicht Sicherheitsprüfung. Deshalb eine vierte Kategorie.
+Drei bestehende Skripte sind mit umgezogen: `lokale-administratoren`, `ad-inaktive-benutzer`
+und `ad-kennwortablauf`. In Security bleiben die reinen Prüf- und Härtungsskripte; die
+privilegierten AD-Gruppen bleiben bewusst dort, weil sie eine Sicherheitsfrage sind.
+
+### Die 13 neuen Skripte
+
+**System (3)**
+
+* `dienste-mehrere-computer` — Dienstmatrix über beliebig viele Computer, Quelle wahlweise
+  Parameter, Textdatei oder Active Directory. Mit HTML- und CSV-Export.
+* `patch-compliance-bericht` — Patchstand je System, Einstufung KONFORM / WARNUNG /
+  NICHT KONFORM und eine Gesamtquote. Läuft über Remoting, weil die
+  Windows-Update-Schnittstelle nur lokal antwortet.
+* `software-inventar-netzwerk` — führt Inventare zusammen, zeigt die Verteilung je Version,
+  findet uneinheitliche Versionsstände und beantwortet „wo ist Produkt X noch installiert".
+
+**Netzwerk (1)**
+
+* `dns-eintraege-pruefen` — Einträge einer Zone nach Typ, Prüfung der SRV-Einträge für die
+  Domänenanmeldung und Suche nach veralteten A-Einträgen.
+
+**Konten (8)**
+
+* `benutzer-anlegen` — lokale Konten einzeln oder aus CSV
+* `konten-aktivieren-deaktivieren` — Offboarding lokal und im AD
+* `gruppenmitgliedschaften-lokal` — Gruppen und Mitglieder aus zwei Blickrichtungen
+* `lokale-konten-bericht` — alle lokalen Konten plus Aufräumkandidaten
+* `ad-benutzer-anlegen` — Onboarding im Stapel aus CSV
+* `ad-gruppenmitgliedschaften` — Gruppenaudit aus drei Blickrichtungen
+* `ad-computer-betriebssysteme` — OS-Verteilung, Build-Stände, Support-Ende
+* `ad-deaktivierte-konten` — deaktiviert, abgelaufen, gesperrt, Löschvorschläge
+
+**Security (1)**
+
+* `rdp-sitzungsverlauf` — führt drei Protokollquellen zusammen: angenommene Verbindungen mit
+  Quell-IP (ID 1149), Sitzungsereignisse (IDs 21/23/24/25) und fehlgeschlagene RDP-Anmeldungen
+  aus dem Sicherheitsprotokoll.
+
+### Entscheidungen
+
+**Ändernde Skripte laufen standardmäßig als Testlauf.**
+Bis Tag 2 las der Katalog nur. Vier der neuen Skripte verändern etwas. Sie tun ohne
+`-Anwenden` gar nichts, sondern zeigen eine Vorschau dessen, was passieren würde. Das ist
+bewusst umgekehrt zum üblichen `-WhatIf`: der gefährliche Fall braucht die zusätzliche
+Eingabe, nicht der harmlose.
+
+**Eingebaute Konten sind gesperrt.**
+`konten-aktivieren-deaktivieren` weigert sich, Konten mit SID-Endung `-500` oder `-501`
+anzufassen — auch mit `-Anwenden`. Ein versehentlich deaktivierter lokaler Administrator ist
+auf einem Server ein sehr teurer Fehler.
+
+**Erzeugte Kennwörter erscheinen nur auf dem Bildschirm.**
+Beide Anlege-Skripte zeigen Erstkennwörter einmalig an. Die CSV-Protokolldatei von
+`ad-benutzer-anlegen` enthält bewusst keine Kennwortspalte.
+
+**Mehrere Computer: zwei Wege, je nach Datenquelle.**
+Wo WMI genügt (Dienste, Datenträger), wird `-ComputerName` genutzt — das braucht kein WinRM.
+Wo lokale Schnittstellen nötig sind (Windows Update, Registrierung), läuft die Abfrage über
+`Invoke-Command`. Der lokale Rechner wird dabei immer direkt abgefragt, nie über Remoting.
+
+### Geprüft
+
+* Alle 51 Skripte gegen den Parser von Windows PowerShell 5.1 — 0 Fehler
+* `catalog.json` gegen das Dateisystem: keine fehlenden Dateien, keine verwaisten Skripte,
+  keine doppelten IDs, alle Kategoriezuordnungen gültig
+* `dotnet build` — 0 Warnungen, 0 Fehler
+* Anwendung gestartet: vier Kategorien in der Leiste, Statusleiste meldet
+  „51 Skripte in 4 Kategorien"
+
+### Aufgefallen
+
+* `Sort-Object Computer -Descending, Name` ist ein Syntaxfehler — nach dem Schalter darf keine
+  weitere Eigenschaft folgen. Für gemischte Sortierrichtungen braucht es die Hashtable-Form
+  `@{ Expression = 'Computer'; Descending = $true }`.
+* Die laufende Anwendung sperrt beim Neubauen ihre eigene `AdminWerk.exe`. Vor `dotnet build`
+  also beenden.
+
+### Als Nächstes
+
+* [ ] Anwendungssymbol (`.ico`) ergänzen und im Projekt eintragen
+* [ ] Skripte als Favoriten markieren können
+* [ ] Parameterblock eines Skripts in der Detailansicht gesondert darstellen
+* [ ] Suchfeld über `Strg+F` erreichbar machen, Tastaturbedienung insgesamt schärfen
+* [ ] Weitere Bereiche erwägen: Drucker, Hyper-V, Zertifikate, Exchange
+* [ ] CSV-Vorlagen für die beiden Anlege-Skripte als Beispieldateien mitliefern
+
+---
+
 ## Tag 1 — 20.09.2026
 
 ### Ergebnis
