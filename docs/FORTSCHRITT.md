@@ -12,6 +12,17 @@ wurden und was als Nächstes ansteht.
 Der Katalog deckt jetzt alle zwölf geplanten Themenbereiche vollständig ab: **51 Skripte in
 vier Kategorien**. Neu hinzugekommen ist die Kategorie **Konten**.
 
+Dazu kamen im Lauf des Tages drei Dinge, die nicht geplant waren: eine **Favoritenfunktion**,
+eine **eigene Bildmarke** samt Anwendungssymbol — und am Ende eine Runde Aufräumarbeit am
+Repository selbst.
+
+| | Vormittag | Abend |
+|---|---|---|
+| Skripte | 38 | 51 |
+| Kategorien | 3 | 4 |
+| Anwendungssymbol | keines | 16 bis 256 px |
+| Favoriten | nein | ja, je Benutzer gespeichert |
+
 ### Ausgangspunkt: Lückenanalyse
 
 Der bestehende Katalog wurde gegen die zwölf Themenbereiche geprüft, die das Projekt abdecken
@@ -206,6 +217,48 @@ Fensters zeigt es.
 
 Die README trägt jetzt eine Wortmarke im Kopf, in zwei Fassungen — sonst verschwindet „Admin"
 im hellen Thema von GitHub. Die Auswahl übernimmt `<picture>` mit `prefers-color-scheme`.
+
+### Zum Schluss: ein Commit, der sich nicht vertreiben liess
+
+Das Repository sollte nur einen Mitwirkenden ausweisen. Der allererste Commit von Tag 1 trug
+jedoch eine Zeile `Co-Authored-By:` am Ende der Nachricht, und GitHub führte daraufhin zwei
+Personen unter „Contributors".
+
+**Erster Versuch: Nachricht korrigieren.** `git commit --amend` ohne die Zeile, danach
+`git push --force-with-lease`. Der Verlauf war damit sauber — und die Seite zeigte weiterhin
+zwei Mitwirkende.
+
+**Zweiter Versuch: abwarten.** Drei weitere Commits wurden gepusht. Die Anzeige blieb.
+
+**Die Ursache** liess sich erst mit einem Blick auf die verschiedenen Datenquellen finden:
+
+| Quelle | Antwort |
+|---|---|
+| `git log` lokal | 4 Commits, überall nur ein Autor, keine Co-Author-Zeile |
+| `/repos/.../commits?sha=main` | dieselben 4 Commits, nur ein Autor |
+| `/repos/.../stats/contributors` | `alikiratli total=4` — korrekt |
+| `/repos/.../contributors` | `alikiratli commits=1` — veraltet |
+| Seitenleiste im Browser | **2 Mitwirkende** |
+
+Die entscheidende Abfrage war dann `/repos/.../commits/5020c27`: **Der ursprüngliche Commit
+lag noch auf dem Server.** Ein `--force`-Push nimmt einen Commit aus dem Verlauf des Zweiges,
+löscht das Objekt aber nicht — es bleibt über seine Prüfsumme erreichbar, und die
+zwischengespeicherte Mitwirkendenliste speiste sich weiter daraus.
+
+Gelernt: Ein Commit ist nach `--force` **aus dem Verlauf** verschwunden, nicht **vom Server**.
+Wer eine Nachricht wirklich aus einem öffentlichen Repository entfernen will, muss entweder den
+Support bemühen oder das Repository neu anlegen. Und: Wenn die Oberfläche etwas anderes sagt
+als die API, hat meistens nicht die Oberfläche unrecht, sondern die eine Abfrage, die man
+gerade nicht gestellt hat.
+
+**Behoben** durch Neuanlage des Repositories: Verlauf als `git bundle` gesichert und mit
+`git bundle verify` geprüft, Einstellungen notiert, Repository gelöscht und unter demselben
+Namen neu angelegt, dieselben vier Commits gepusht. Danach liefert `/commits/5020c27` ein
+`422 No commit found`, die Contributors-Liste nennt `alikiratli commits=4`, und die Seite zeigt
+einen Mitwirkenden.
+
+Verloren ging dabei nichts: null Sterne, null Forks, null Beobachter. Nur das Anlagedatum des
+Repositories ist jetzt der heutige Tag, und die Commit-Prüfsummen sind unverändert geblieben.
 
 ### Als Nächstes
 
