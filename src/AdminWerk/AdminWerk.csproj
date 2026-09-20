@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <LangVersion>latest</LangVersion>
+    <RootNamespace>AdminWerk</RootNamespace>
+    <AssemblyName>AdminWerk</AssemblyName>
+    <Version>0.1.0</Version>
+    <Product>AdminWerk - Windows Administration Suite</Product>
+    <Company>AdminWerk</Company>
+    <NeutralLanguage>de-DE</NeutralLanguage>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Skriptkatalog wird neben die EXE kopiert, damit Admins eigene Skripte ergaenzen koennen. -->
+    <Content Include="Scripts\**\*.*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,40 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Grundflaechen -->
+    <SolidColorBrush x:Key="Flaeche.Fenster"   Color="#0E1217" />
+    <SolidColorBrush x:Key="Flaeche.Kopf"      Color="#11161D" />
+    <SolidColorBrush x:Key="Flaeche.Karte"     Color="#161C24" />
+    <SolidColorBrush x:Key="Flaeche.Erhoben"   Color="#1C242F" />
+    <SolidColorBrush x:Key="Flaeche.Code"      Color="#0B0F14" />
+
+    <!-- Linien -->
+    <SolidColorBrush x:Key="Linie.Standard"    Color="#242D39" />
+    <SolidColorBrush x:Key="Linie.Betont"      Color="#33404F" />
+
+    <!-- Text -->
+    <SolidColorBrush x:Key="Text.Primaer"      Color="#E6EDF3" />
+    <SolidColorBrush x:Key="Text.Sekundaer"    Color="#93A1B1" />
+    <SolidColorBrush x:Key="Text.Gedaempft"    Color="#6B7A8C" />
+
+    <!-- Akzente -->
+    <SolidColorBrush x:Key="Akzent.Primaer"    Color="#4C9AFF" />
+    <SolidColorBrush x:Key="Akzent.Hell"       Color="#7FB8FF" />
+    <SolidColorBrush x:Key="Akzent.Warnung"    Color="#F0A94C" />
+    <SolidColorBrush x:Key="Akzent.Erfolg"     Color="#4FD18B" />
+    <SolidColorBrush x:Key="Akzent.Fehler"     Color="#FF6B6B" />
+
+    <!-- Syntaxhervorhebung PowerShell -->
+    <SolidColorBrush x:Key="Syntax.Standard"   Color="#D6E2F0" />
+    <SolidColorBrush x:Key="Syntax.Kommentar"  Color="#6A9955" />
+    <SolidColorBrush x:Key="Syntax.Zeichenkette" Color="#CE9178" />
+    <SolidColorBrush x:Key="Syntax.Variable"   Color="#9CDCFE" />
+    <SolidColorBrush x:Key="Syntax.Schluesselwort" Color="#C586C0" />
+    <SolidColorBrush x:Key="Syntax.Cmdlet"     Color="#4EC9B0" />
+    <SolidColorBrush x:Key="Syntax.Parameter"  Color="#DCDCAA" />
+    <SolidColorBrush x:Key="Syntax.Zahl"       Color="#B5CEA8" />
+
+    <FontFamily x:Key="Schrift.Oberflaeche">Segoe UI</FontFamily>
+    <FontFamily x:Key="Schrift.Code">Cascadia Mono, Consolas, Courier New</FontFamily>
+
+</ResourceDictionary>

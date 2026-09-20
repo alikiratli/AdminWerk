@@ -1,0 +1,25 @@
+# Build-Ausgaben
+bin/
+obj/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+*.user
+*.suo
+*.cache
+
+# Visual Studio / Rider / VS Code
+.vs/
+.idea/
+.vscode/
+*.sln.docstates
+
+# Veroeffentlichung
+publish/
+*.publishsettings
+
+# Betriebssystem
+Thumbs.db
+desktop.ini
+.DS_Store
