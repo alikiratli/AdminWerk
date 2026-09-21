@@ -153,11 +153,22 @@
                         <DataTemplate>
                             <Grid>
                                 <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
 
-                                <StackPanel Grid.Column="0">
+                                <!-- Der Haken sammelt fuer das naechste Pruefpaket; der Stern
+                                     rechts merkt sich dauerhaft. Zwei Dinge, zwei Marken. -->
+                                <CheckBox Grid.Column="0"
+                                          Style="{StaticResource Schalter}"
+                                          IsChecked="{Binding ImPaket}"
+                                          Margin="0,1,11,0"
+                                          VerticalAlignment="Top"
+                                          AutomationProperties.Name="{Binding Titel, StringFormat=Ins Prüfpaket: {0}}"
+                                          ToolTip="Für das Prüfpaket auswählen" />
+
+                                <StackPanel Grid.Column="1">
                                     <TextBlock Text="{Binding Titel}"
                                                FontSize="13.5"
                                                FontWeight="SemiBold"
@@ -177,7 +188,7 @@
                                                Foreground="{StaticResource Akzent.Hell}" />
                                 </StackPanel>
 
-                                <Button Grid.Column="1"
+                                <Button Grid.Column="2"
                                         Style="{StaticResource Schaltflaeche.Stern}"
                                         Command="{Binding DataContext.FavoritUmschaltenBefehl, RelativeSource={RelativeSource AncestorType=Window}}"
                                         CommandParameter="{Binding}" />
@@ -437,11 +448,37 @@
                 <StackPanel Grid.Column="0" Orientation="Horizontal">
                     <TextBlock Text="{Binding TrefferText}"
                                FontSize="12"
+                               VerticalAlignment="Center"
                                Foreground="{StaticResource Text.Sekundaer}" />
                     <TextBlock FontSize="12"
                                Margin="14,0,0,0"
+                               VerticalAlignment="Center"
                                Foreground="{StaticResource Akzent.Warnung}"
                                Text="{Binding FavoritenAnzahl, StringFormat=★ {0} Favoriten}" />
+
+                    <!-- Der Paketbereich erscheint erst, wenn etwas ausgewaehlt ist -
+                         solange die Auswahl leer ist, waere er nur Rauschen. -->
+                    <StackPanel Orientation="Horizontal"
+                                Margin="18,0,0,0"
+                                Visibility="{Binding HatPaket, Converter={StaticResource BoolZuSichtbarkeit}}">
+                        <TextBlock Text="{Binding PaketText}"
+                                   FontSize="12"
+                                   VerticalAlignment="Center"
+                                   Foreground="{StaticResource Akzent.Primaer}" />
+                        <Button Content="Paket erzeugen"
+                                Style="{StaticResource Schaltflaeche.Primaer}"
+                                Command="{Binding PaketErzeugenBefehl}"
+                                Padding="12,4"
+                                FontSize="12"
+                                Margin="12,0,0,0"
+                                ToolTip="Die ausgewählten Skripte als Ordner mit Läufer und Bericht ablegen" />
+                        <Button Content="Auswahl leeren"
+                                Style="{StaticResource Schaltflaeche.Sekundaer}"
+                                Command="{Binding PaketLeerenBefehl}"
+                                Padding="12,4"
+                                FontSize="12"
+                                Margin="7,0,0,0" />
+                    </StackPanel>
                 </StackPanel>
                 <TextBlock Grid.Column="1"
                            Text="{Binding Statusmeldung}"

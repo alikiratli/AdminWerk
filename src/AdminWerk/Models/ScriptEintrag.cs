@@ -7,6 +7,7 @@ namespace AdminWerk.Models;
 public sealed class ScriptEintrag : INotifyPropertyChanged
 {
     private bool _istFavorit;
+    private bool _imPaket;
 
     [JsonPropertyName("id")]
     public string Id { get; init; } = string.Empty;
@@ -30,6 +31,18 @@ public sealed class ScriptEintrag : INotifyPropertyChanged
     /// <summary>True, wenn das Skript eine erhoehte PowerShell-Sitzung benoetigt.</summary>
     [JsonPropertyName("adminRechte")]
     public bool AdminRechte { get; init; }
+
+    /// <summary>True, wenn das Skript am System etwas aendern kann.</summary>
+    [JsonPropertyName("veraendert")]
+    public bool Veraendert { get; init; }
+
+    /// <summary>
+    /// Was ein Pruefpaket ergaenzen muss, damit der Lauf nichts veraendert - etwa
+    /// <c>-NurPruefen</c>. Leer bedeutet: das Skript ist von sich aus ein Testlauf und
+    /// braucht erst <c>-Anwenden</c>, um wirklich zu handeln.
+    /// </summary>
+    [JsonPropertyName("sichererSchalter")]
+    public string SichererSchalter { get; init; } = string.Empty;
 
     /// <summary>Freitext zu Zielsystemen bzw. benoetigten Modulen.</summary>
     [JsonPropertyName("voraussetzung")]
@@ -73,6 +86,26 @@ public sealed class ScriptEintrag : INotifyPropertyChanged
     /// <summary>Beschriftung der Favoritenschaltflaeche im Detailbereich.</summary>
     [JsonIgnore]
     public string FavoritText => IstFavorit ? "★  Favorit" : "☆  Als Favorit merken";
+
+    /// <summary>
+    /// Fuer das naechste Pruefpaket ausgewaehlt. Anders als die Favoriten eine
+    /// Zusammenstellung fuer den Augenblick - sie wird nicht gespeichert.
+    /// </summary>
+    [JsonIgnore]
+    public bool ImPaket
+    {
+        get => _imPaket;
+        set
+        {
+            if (_imPaket == value)
+            {
+                return;
+            }
+
+            _imPaket = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ImPaket)));
+        }
+    }
 
     public event PropertyChangedEventHandler? PropertyChanged;
 

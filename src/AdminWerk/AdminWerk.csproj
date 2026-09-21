@@ -27,6 +27,12 @@
     <Content Include="Scripts\**\*.*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+
+    <!-- Der Paketlaeufer liegt als eigene Datei vor, nicht als Zeichenkette im Code:
+         so wird er von der Katalogpruefung und PSScriptAnalyzer mitgeprueft. -->
+    <Content Include="Vorlagen\**\*.*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
 </Project>

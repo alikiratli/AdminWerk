@@ -54,7 +54,7 @@ jobs:
           # Auch die Werkzeuge selbst: neue Skripte sollen nicht ungeprueft bleiben.
           # -Path nimmt nur einen Pfad, deshalb zwei Durchlaeufe.
           $befunde = @()
-          foreach ($pfad in '.\src\AdminWerk\Scripts', '.\tools') {
+          foreach ($pfad in '.\src\AdminWerk\Scripts', '.\src\AdminWerk\Vorlagen', '.\tools') {
               $befunde += Invoke-ScriptAnalyzer -Path $pfad -Recurse `
                   -Settings .\tools\PSScriptAnalyzerSettings.psd1
           }

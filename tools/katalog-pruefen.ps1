@@ -54,6 +54,12 @@ $beanstandungen = New-Object System.Collections.Generic.List[string]
 # Cmdlet erkannt". Der Parser sieht das nicht, der Exitcode auch nicht - daher hier.
 $schluesselwoerter = @('if', 'elseif', 'switch', 'while', 'for', 'foreach', 'do', 'until', 'try')
 
+# Operatoren, deren rechte Seite ein regulaerer Ausdruck ist.
+$musterOperatoren = @(
+    'match', 'notmatch', 'imatch', 'inotmatch', 'cmatch', 'cnotmatch',
+    'replace', 'ireplace', 'creplace',
+    'split', 'isplit', 'csplit')
+
 $dateien = Get-ChildItem -Path $Skriptverzeichnis -Filter '*.ps1' -Recurse -File
 foreach ($datei in $dateien) {
     $marken = $null
@@ -67,6 +73,33 @@ foreach ($datei in $dateien) {
                 "Syntax: {0}:{1} - {2}" -f $datei.Name, $f.Extent.StartLineNumber, $f.Message))
         }
         continue
+    }
+
+    # Regex-Literale uebersetzen. Weder der Parser noch PSScriptAnalyzer sehen, ob ein
+    # Muster gueltig ist - ein vergessener doppelter Backslash faellt erst zur Laufzeit
+    # auf, und dann mittendrin im Bericht.
+    $vergleiche = $baum.FindAll(
+        { param($knoten) $knoten -is [System.Management.Automation.Language.BinaryExpressionAst] }, $true)
+    foreach ($vergleich in $vergleiche) {
+        if ($musterOperatoren -notcontains $vergleich.Operator.ToString().ToLower()) { continue }
+
+        # Bei -replace mit Ersatztext steht rechts ein Feld aus Muster und Ersatz.
+        # Das Muster ist dessen erstes Element.
+        $rechts = $vergleich.Right
+        if ($rechts -is [System.Management.Automation.Language.ArrayLiteralAst]) {
+            $rechts = $rechts.Elements[0]
+        }
+
+        if ($rechts -isnot [System.Management.Automation.Language.StringConstantExpressionAst]) { continue }
+
+        try {
+            [void][regex]::new($rechts.Value)
+        }
+        catch {
+            $beanstandungen.Add((
+                "Ungueltiges Muster: {0}:{1} - '{2}'" -f `
+                    $datei.Name, $vergleich.Extent.StartLineNumber, $rechts.Value))
+        }
     }
 
     $befehle = $baum.FindAll(
@@ -135,11 +168,45 @@ foreach ($eintrag in $katalog.skripte) {
 
     # Die Detailansicht lebt von der kommentarbasierten Hilfe - sie muss da sein.
     $vollPfad = Join-Path $Skriptverzeichnis ($eintrag.datei -replace '/', '\')
-    if (Test-Path -Path $vollPfad) {
-        $inhalt = Get-Content -Path $vollPfad -Raw -Encoding UTF8
-        if ($inhalt -notmatch '(?m)^\s*\.SYNOPSIS\s*$') {
-            $beanstandungen.Add(("Keine .SYNOPSIS in '{0}'" -f $eintrag.datei))
-        }
+    if (-not (Test-Path -Path $vollPfad)) { continue }
+
+    $inhalt = Get-Content -Path $vollPfad -Raw -Encoding UTF8
+    if ($inhalt -notmatch '(?m)^\s*\.SYNOPSIS\s*$') {
+        $beanstandungen.Add(("Keine .SYNOPSIS in '{0}'" -f $eintrag.datei))
+    }
+
+    # Kennzeichnung veraendernder Skripte gegen den Quelltext pruefen. Auf dieses
+    # Feld verlaesst sich das Pruefpaket, wenn es den Laeufer baut - stimmt es nicht,
+    # startet ein Auditlauf Dienste oder repariert Systemdateien.
+    $t = $null
+    $e = $null
+    $baum = [System.Management.Automation.Language.Parser]::ParseFile($vollPfad, [ref]$t, [ref]$e)
+    $parameterNamen = @()
+    if ($baum.ParamBlock) {
+        $parameterNamen = @($baum.ParamBlock.Parameters | ForEach-Object { $_.Name.VariablePath.UserPath })
+    }
+
+    $hatAnwenden = $parameterNamen -contains 'Anwenden'
+    $hatNurPruefen = $parameterNamen -contains 'NurPruefen'
+    $sollVeraendert = $hatAnwenden -or $hatNurPruefen
+
+    if ($sollVeraendert -and -not $eintrag.veraendert) {
+        $beanstandungen.Add(
+            ("'{0}' hat -{1} im param()-Block, ist aber nicht als veraendert gekennzeichnet" -f `
+                $kennung, $(if ($hatAnwenden) { 'Anwenden' } else { 'NurPruefen' })))
+    }
+
+    if ($eintrag.veraendert -and -not $sollVeraendert) {
+        $beanstandungen.Add(
+            ("'{0}' ist als veraendert gekennzeichnet, hat aber weder -Anwenden noch -NurPruefen" -f $kennung))
+    }
+
+    # Ein Skript, das ohne Zutun aendert, braucht den Schalter, der es zaehmt.
+    $erwarteterSchalter = if ($hatNurPruefen) { '-NurPruefen' } else { '' }
+    if ($sollVeraendert -and [string]$eintrag.sichererSchalter -ne $erwarteterSchalter) {
+        $beanstandungen.Add(
+            ("'{0}': sichererSchalter ist '{1}', erwartet '{2}'" -f `
+                $kennung, [string]$eintrag.sichererSchalter, $erwarteterSchalter))
     }
 }
 Write-Host ("[3/3] Angaben     - {0} Eintraege geprueft" -f $katalog.skripte.Count)

@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Windows;
+using System.Windows.Input;
 using AdminWerk.Models;
 using AdminWerk.Services;
 using Microsoft.Win32;
@@ -20,6 +21,7 @@ public sealed class HauptViewModel : ViewModelBasis
 
     private readonly KatalogDienst _katalogDienst;
     private readonly FavoritenDienst _favoritenDienst;
+    private readonly PaketDienst _paketDienst;
     private readonly List<ScriptEintrag> _alleSkripte = [];
 
     private int _echteKategorien;
@@ -39,6 +41,7 @@ public sealed class HauptViewModel : ViewModelBasis
     {
         _katalogDienst = katalogDienst;
         _favoritenDienst = favoritenDienst;
+        _paketDienst = new PaketDienst(katalogDienst.SkriptVerzeichnis);
 
         KopierenBefehl = new AktionsBefehl(_ => SkriptKopieren(), _ => AusgewaehltesSkript is not null);
         SpeichernBefehl = new AktionsBefehl(_ => SkriptSpeichern(), _ => AusgewaehltesSkript is not null);
@@ -49,6 +52,8 @@ public sealed class HauptViewModel : ViewModelBasis
         FavoritUmschaltenBefehl = new AktionsBefehl(FavoritUmschalten, p => (p ?? AusgewaehltesSkript) is not null);
         AufrufKopierenBefehl = new AktionsBefehl(_ => AufrufKopieren(), _ => HatParameter);
         InPowerShellOeffnenBefehl = new AktionsBefehl(_ => InPowerShellOeffnen(), _ => AusgewaehltesSkript is not null);
+        PaketErzeugenBefehl = new AktionsBefehl(_ => PaketErzeugen(), _ => PaketAnzahl > 0);
+        PaketLeerenBefehl = new AktionsBefehl(_ => PaketLeeren(), _ => PaketAnzahl > 0);
         ParameterLeerenBefehl = new AktionsBefehl(_ => ParameterLeeren(), _ => HatParameter);
 
         KatalogLaden();
@@ -75,6 +80,16 @@ public sealed class HauptViewModel : ViewModelBasis
     public AktionsBefehl ParameterLeerenBefehl { get; }
 
     public AktionsBefehl InPowerShellOeffnenBefehl { get; }
+
+    public AktionsBefehl PaketErzeugenBefehl { get; }
+
+    public AktionsBefehl PaketLeerenBefehl { get; }
+
+    public int PaketAnzahl => _alleSkripte.Count(s => s.ImPaket);
+
+    public bool HatPaket => PaketAnzahl > 0;
+
+    public string PaketText => PaketAnzahl == 1 ? "1 Skript im Paket" : $"{PaketAnzahl} Skripte im Paket";
 
     public ScriptKategorie? AusgewaehlteKategorie
     {
@@ -188,6 +203,13 @@ public sealed class HauptViewModel : ViewModelBasis
     {
         var vorherigeKategorieId = AusgewaehlteKategorie?.Id;
 
+        // Beim Neuladen entstehen neue Objekte - die alten Anmeldungen muessen weg,
+        // sonst zaehlt die Paketanzahl Skripte mit, die es nicht mehr gibt.
+        foreach (var alt in _alleSkripte)
+        {
+            alt.PropertyChanged -= SkriptGeaendert;
+        }
+
         _alleSkripte.Clear();
         Kategorien.Clear();
 
@@ -230,6 +252,7 @@ public sealed class HauptViewModel : ViewModelBasis
             foreach (var skript in _alleSkripte)
             {
                 skript.IstFavorit = favoriten.Contains(skript.Id);
+                skript.PropertyChanged += SkriptGeaendert;
             }
 
             _echteKategorien = katalog.Kategorien.Count;
@@ -305,6 +328,76 @@ public sealed class HauptViewModel : ViewModelBasis
         if (AusgewaehlteKategorie?.Id == FavoritenKategorieId)
         {
             FilterAnwenden();
+        }
+    }
+
+    private void SkriptGeaendert(object? absender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName != nameof(ScriptEintrag.ImPaket))
+        {
+            return;
+        }
+
+        BenachrichtigeAenderung(nameof(PaketAnzahl));
+        BenachrichtigeAenderung(nameof(HatPaket));
+        BenachrichtigeAenderung(nameof(PaketText));
+
+        // AktionsBefehl haengt an CommandManager.RequerySuggested. Der Haken wird zwar
+        // ueber die Oberflaeche gesetzt, "Paket leeren" aendert ihn aber im Code -
+        // danach muss die Ausfuehrbarkeit ausdruecklich neu bewertet werden.
+        CommandManager.InvalidateRequerySuggested();
+    }
+
+    private void PaketLeeren()
+    {
+        foreach (var skript in _alleSkripte)
+        {
+            skript.ImPaket = false;
+        }
+
+        Statusmeldung = "Paketauswahl geleert.";
+    }
+
+    /// <summary>
+    /// Schreibt die ausgewaehlten Skripte als Pruefpaket in einen Ordner: die Dateien,
+    /// den Laeufer und die Beschreibung. Ausgefuehrt wird nichts.
+    /// </summary>
+    private void PaketErzeugen()
+    {
+        var gewaehlt = _alleSkripte.Where(s => s.ImPaket).ToList();
+        if (gewaehlt.Count == 0)
+        {
+            return;
+        }
+
+        var dialog = new OpenFolderDialog
+        {
+            Title = "Wohin soll das Prüfpaket?",
+            Multiselect = false
+        };
+
+        if (dialog.ShowDialog() != true)
+        {
+            return;
+        }
+
+        var name = $"AdminWerk-Pruefpaket_{DateTime.Now:yyyy-MM-dd_HHmm}";
+        var ziel = Path.Combine(dialog.FolderName, name);
+
+        try
+        {
+            var anzahl = _paketDienst.Erzeugen(ziel, "Prüfpaket", gewaehlt);
+
+            var fehlend = gewaehlt.Count - anzahl;
+            Statusmeldung = fehlend == 0
+                ? $"Prüfpaket mit {anzahl} Skripten erstellt: {ziel}"
+                : $"Prüfpaket mit {anzahl} Skripten erstellt; {fehlend} Datei(en) fehlten im Katalog.";
+
+            Process.Start(new ProcessStartInfo(ziel) { UseShellExecute = true });
+        }
+        catch (Exception ex)
+        {
+            Statusmeldung = $"Prüfpaket konnte nicht erstellt werden: {ex.Message}";
         }
     }
 

@@ -37,6 +37,7 @@
         "Patch-Management"
       ],
       "adminRechte": false,
+      "veraendert": false,
       "voraussetzung": "Lesezugriff auf HKLM"
     },
     {
@@ -52,6 +53,7 @@
         "HTML"
       ],
       "adminRechte": true,
+      "veraendert": false,
       "voraussetzung": "WMI-Zugriff; optional Modul ActiveDirectory"
     },
     {
@@ -66,6 +68,7 @@
         "Logging"
       ],
       "adminRechte": false,
+      "veraendert": false,
       "voraussetzung": "Windows 10/11, Server 2016+"
     },
     {
@@ -79,6 +82,7 @@
         "Audit"
       ],
       "adminRechte": true,
+      "veraendert": false,
       "voraussetzung": "Modul ScheduledTasks"
     },
     {
@@ -93,6 +97,7 @@
         "HTML"
       ],
       "adminRechte": false,
+      "veraendert": false,
       "voraussetzung": "WMI-Zugriff auf die Zielsysteme"
     },
     {
@@ -107,6 +112,7 @@
         "CSV"
       ],
       "adminRechte": false,
+      "veraendert": false,
       "voraussetzung": "WMI-Zugriff auf die Zielsysteme"
     },
     {
@@ -121,6 +127,8 @@
         "Logging"
       ],
       "adminRechte": true,
+      "veraendert": true,
+      "sichererSchalter": "-NurPruefen",
       "voraussetzung": "Rechte zum Starten von Diensten"
     },
     {
@@ -134,6 +142,7 @@
         "Fehleranalyse"
       ],
       "adminRechte": true,
+      "veraendert": false,
       "voraussetzung": "Windows 10/11, Server 2016+"
     },
     {
@@ -148,6 +157,7 @@
         "Mehrere Systeme"
       ],
       "adminRechte": false,
+      "veraendert": false,
       "voraussetzung": "Windows 10/11, Server 2016+"
     },
     {
@@ -163,6 +173,7 @@
         "HTML"
       ],
       "adminRechte": true,
+      "veraendert": false,
       "voraussetzung": "WinRM auf den Zielsystemen"
     },
     {
@@ -176,6 +187,7 @@
         "Patch-Compliance"
       ],
       "adminRechte": true,
+      "veraendert": false,
       "voraussetzung": "Windows-Update-Dienst verfügbar"
     },
     {
@@ -190,6 +202,7 @@
         "Fehlersuche"
       ],
       "adminRechte": false,
+      "veraendert": false,
       "voraussetzung": "Windows 10/11, Server 2016+"
     },
     {
@@ -204,6 +217,7 @@
         "CSV"
       ],
       "adminRechte": false,
+      "veraendert": false,
       "voraussetzung": "Windows 10/11, Server 2016+"
     },
     {
@@ -219,6 +233,7 @@
         "Mehrere Systeme"
       ],
       "adminRechte": true,
+      "veraendert": false,
       "voraussetzung": "WinRM auf den Zielsystemen"
     },
     {
@@ -233,6 +248,7 @@
         "Compliance"
       ],
       "adminRechte": false,
+      "veraendert": false,
       "voraussetzung": "Windows 10/11, Server 2016+"
     },
     {
@@ -247,6 +263,8 @@
         "Reparatur"
       ],
       "adminRechte": true,
+      "veraendert": true,
+      "sichererSchalter": "-NurPruefen",
       "voraussetzung": "Laufzeit 10–40 Minuten"
     },
     {
@@ -261,6 +279,7 @@
         "Audit"
       ],
       "adminRechte": true,
+      "veraendert": false,
       "voraussetzung": "Modul NetSecurity"
     },
     {
@@ -275,6 +294,7 @@
         "Server"
       ],
       "adminRechte": true,
+      "veraendert": false,
       "voraussetzung": "Modul DhcpServer (RSAT)"
     },
     {
@@ -290,6 +310,7 @@
         "Aufräumen"
       ],
       "adminRechte": true,
+      "veraendert": false,
       "voraussetzung": "Modul DnsServer (RSAT) für die Zonenprüfung"
     },
     {
@@ -304,6 +325,7 @@
         "Sicherheit"
       ],
       "adminRechte": true,
+      "veraendert": false,
       "voraussetzung": "Windows 10/11, Server 2016+"
     },
     {
@@ -317,6 +339,7 @@
         "Diagnose"
       ],
       "adminRechte": false,
+      "veraendert": false,
       "voraussetzung": "Modul DnsClient"
     },
     {
@@ -331,6 +354,7 @@
         "DHCP"
       ],
       "adminRechte": false,
+      "veraendert": false,
       "voraussetzung": "Windows 10/11, Server 2016+"
     },
     {
@@ -345,6 +369,7 @@
         "DNS"
       ],
       "adminRechte": false,
+      "veraendert": false,
       "voraussetzung": "Windows 10/11, Server 2016+"
     },
     {
@@ -359,6 +384,7 @@
         "Diagnose"
       ],
       "adminRechte": false,
+      "veraendert": false,
       "voraussetzung": "ICMP muss erlaubt sein"
     },
     {
@@ -373,6 +399,7 @@
         "Berechtigungen"
       ],
       "adminRechte": true,
+      "veraendert": false,
       "voraussetzung": "Modul SmbShare"
     },
     {
@@ -387,6 +414,7 @@
         "Firewall"
       ],
       "adminRechte": false,
+      "veraendert": false,
       "voraussetzung": "Windows 10/11, Server 2016+"
     },
     {
@@ -401,6 +429,7 @@
         "Zonen"
       ],
       "adminRechte": true,
+      "veraendert": false,
       "voraussetzung": "Modul DnsServer (RSAT)"
     },
     {
@@ -416,6 +445,8 @@
         "Testlauf"
       ],
       "adminRechte": false,
+      "veraendert": true,
+      "sichererSchalter": "",
       "voraussetzung": "Modul ActiveDirectory (RSAT), Rechte in der Ziel-OU"
     },
     {
@@ -431,6 +462,7 @@
         "HTML"
       ],
       "adminRechte": false,
+      "veraendert": false,
       "voraussetzung": "Modul ActiveDirectory (RSAT)"
     },
     {
@@ -446,6 +478,7 @@
         "CSV"
       ],
       "adminRechte": false,
+      "veraendert": false,
       "voraussetzung": "Modul ActiveDirectory (RSAT)"
     },
     {
@@ -461,6 +494,7 @@
         "CSV"
       ],
       "adminRechte": false,
+      "veraendert": false,
       "voraussetzung": "Modul ActiveDirectory (RSAT)"
     },
     {
@@ -476,6 +510,7 @@
         "CSV"
       ],
       "adminRechte": false,
+      "veraendert": false,
       "voraussetzung": "Modul ActiveDirectory (RSAT)"
     },
     {
@@ -491,6 +526,7 @@
         "CSV"
       ],
       "adminRechte": false,
+      "veraendert": false,
       "voraussetzung": "Modul ActiveDirectory (RSAT)"
     },
     {
@@ -506,6 +542,8 @@
         "Testlauf"
       ],
       "adminRechte": true,
+      "veraendert": true,
+      "sichererSchalter": "",
       "voraussetzung": "Optional: Modul ActiveDirectory (RSAT)"
     },
     {
@@ -520,6 +558,7 @@
         "Audit"
       ],
       "adminRechte": true,
+      "veraendert": false,
       "voraussetzung": "Für Remote-Abfragen: WinRM"
     },
     {
@@ -535,6 +574,8 @@
         "Testlauf"
       ],
       "adminRechte": true,
+      "veraendert": true,
+      "sichererSchalter": "",
       "voraussetzung": "Modul Microsoft.PowerShell.LocalAccounts"
     },
     {
@@ -549,6 +590,7 @@
         "Mehrere Systeme"
       ],
       "adminRechte": true,
+      "veraendert": false,
       "voraussetzung": "Für Remote-Abfragen: WinRM"
     },
     {
@@ -564,6 +606,7 @@
         "CSV"
       ],
       "adminRechte": true,
+      "veraendert": false,
       "voraussetzung": "Für Remote-Abfragen: WinRM"
     },
     {
@@ -578,6 +621,7 @@
         "Audit"
       ],
       "adminRechte": false,
+      "veraendert": false,
       "voraussetzung": "Windows 10/11, Server 2016+"
     },
     {
@@ -592,6 +636,7 @@
         "Compliance"
       ],
       "adminRechte": true,
+      "veraendert": false,
       "voraussetzung": "Modul BitLocker"
     },
     {
@@ -606,6 +651,7 @@
         "Ereignisprotokoll"
       ],
       "adminRechte": true,
+      "veraendert": false,
       "voraussetzung": "Zugriff auf das Sicherheitsprotokoll"
     },
     {
@@ -619,6 +665,7 @@
         "Härtung"
       ],
       "adminRechte": true,
+      "veraendert": false,
       "voraussetzung": "Modul NetSecurity"
     },
     {
@@ -632,6 +679,7 @@
         "Härtung"
       ],
       "adminRechte": true,
+      "veraendert": false,
       "voraussetzung": "Modul Microsoft.PowerShell.LocalAccounts"
     },
     {
@@ -646,6 +694,7 @@
         "Compliance"
       ],
       "adminRechte": true,
+      "veraendert": false,
       "voraussetzung": "Optional: Modul ActiveDirectory"
     },
     {
@@ -659,6 +708,7 @@
         "Nachvollziehbarkeit"
       ],
       "adminRechte": true,
+      "veraendert": false,
       "voraussetzung": "Zugriff auf das Sicherheitsprotokoll"
     },
     {
@@ -673,6 +723,7 @@
         "Ausschlüsse"
       ],
       "adminRechte": true,
+      "veraendert": false,
       "voraussetzung": "Modul Defender"
     },
     {
@@ -687,6 +738,7 @@
         "Audit"
       ],
       "adminRechte": false,
+      "veraendert": false,
       "voraussetzung": "Modul ActiveDirectory (RSAT)"
     },
     {
@@ -701,6 +753,7 @@
         "Fernzugriff"
       ],
       "adminRechte": true,
+      "veraendert": false,
       "voraussetzung": "Lesezugriff auf HKLM"
     },
     {
@@ -716,6 +769,7 @@
         "CSV"
       ],
       "adminRechte": true,
+      "veraendert": false,
       "voraussetzung": "Zugriff auf Sicherheits- und TerminalServices-Protokolle"
     },
     {
@@ -730,6 +784,7 @@
         "Signatur"
       ],
       "adminRechte": true,
+      "veraendert": false,
       "voraussetzung": "Windows 10/11, Server 2016+"
     },
     {
@@ -745,6 +800,7 @@
         "CSV"
       ],
       "adminRechte": true,
+      "veraendert": false,
       "voraussetzung": "Windows 10/11, Server 2016+"
     }
   ]
