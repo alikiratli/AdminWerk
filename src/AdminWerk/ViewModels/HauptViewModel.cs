@@ -24,6 +24,9 @@ public sealed class HauptViewModel : ViewModelBasis
     private readonly PaketDienst _paketDienst;
     private readonly List<ScriptEintrag> _alleSkripte = [];
 
+    /// <summary>Gelesene Parameter je Skriptbezeichner - siehe <see cref="ParameterFuer"/>.</summary>
+    private readonly Dictionary<string, IReadOnlyList<SkriptParameter>> _parameterJeSkript = [];
+
     private int _echteKategorien;
 
     private ScriptKategorie? _ausgewaehlteKategorie;
@@ -203,12 +206,20 @@ public sealed class HauptViewModel : ViewModelBasis
     {
         var vorherigeKategorieId = AusgewaehlteKategorie?.Id;
 
+        // Die Paketauswahl ueberlebt das Neuladen - sie ist Handarbeit und soll nicht
+        // verloren gehen, nur weil der Katalog neu eingelesen wird.
+        var vorherigePaketIds = _alleSkripte.Where(s => s.ImPaket).Select(s => s.Id).ToHashSet();
+
         // Beim Neuladen entstehen neue Objekte - die alten Anmeldungen muessen weg,
         // sonst zaehlt die Paketanzahl Skripte mit, die es nicht mehr gibt.
         foreach (var alt in _alleSkripte)
         {
             alt.PropertyChanged -= SkriptGeaendert;
         }
+
+        // Die gelesenen Parameter koennen nach dem Neuladen veraltet sein: genau dafuer
+        // drueckt man die Schaltflaeche.
+        _parameterJeSkript.Clear();
 
         _alleSkripte.Clear();
         Kategorien.Clear();
@@ -252,6 +263,7 @@ public sealed class HauptViewModel : ViewModelBasis
             foreach (var skript in _alleSkripte)
             {
                 skript.IstFavorit = favoriten.Contains(skript.Id);
+                skript.ImPaket = vorherigePaketIds.Contains(skript.Id);
                 skript.PropertyChanged += SkriptGeaendert;
             }
 
@@ -267,6 +279,9 @@ public sealed class HauptViewModel : ViewModelBasis
                                 ?? Kategorien.FirstOrDefault();
 
         BenachrichtigeAenderung(nameof(KatalogInfo));
+        BenachrichtigeAenderung(nameof(PaketAnzahl));
+        BenachrichtigeAenderung(nameof(HatPaket));
+        BenachrichtigeAenderung(nameof(PaketText));
         FilterAnwenden();
     }
 
@@ -386,7 +401,7 @@ public sealed class HauptViewModel : ViewModelBasis
 
         try
         {
-            var anzahl = _paketDienst.Erzeugen(ziel, "Prüfpaket", gewaehlt);
+            var anzahl = _paketDienst.Erzeugen(ziel, "Prüfpaket", gewaehlt, ParameterFuer);
 
             var fehlend = gewaehlt.Count - anzahl;
             Statusmeldung = fehlend == 0
@@ -413,7 +428,7 @@ public sealed class HauptViewModel : ViewModelBasis
 
         if (AusgewaehltesSkript is { } skript)
         {
-            foreach (var p in ParameterDienst.Auslesen(skript.Inhalt))
+            foreach (var p in ParameterFuer(skript))
             {
                 p.PropertyChanged += ParameterGeaendert;
                 Parameter.Add(p);
@@ -423,6 +438,23 @@ public sealed class HauptViewModel : ViewModelBasis
         BenachrichtigeAenderung(nameof(HatParameter));
         BenachrichtigeAenderung(nameof(ParameterUeberschrift));
         AufrufzeileNeuBauen();
+    }
+
+    /// <summary>
+    /// Die Parameter eines Skripts, einmal gelesen und dann behalten. Das haelt die
+    /// Eingaben ueber den Skriptwechsel hinweg - und erst dadurch kann ein Pruefpaket
+    /// die Werte mitnehmen, die im Assistenten stehen.
+    /// </summary>
+    private IReadOnlyList<SkriptParameter> ParameterFuer(ScriptEintrag skript)
+    {
+        if (_parameterJeSkript.TryGetValue(skript.Id, out var bekannt))
+        {
+            return bekannt;
+        }
+
+        var gelesen = ParameterDienst.Auslesen(skript.Inhalt);
+        _parameterJeSkript[skript.Id] = gelesen;
+        return gelesen;
     }
 
     private void ParameterGeaendert(object? absender, PropertyChangedEventArgs e) => AufrufzeileNeuBauen();

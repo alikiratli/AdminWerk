@@ -64,6 +64,16 @@ if ($brauchtAdmin.Count -gt 0 -and -not $istAdmin) {
     Write-Host ''
 }
 
+function WertAnzeigen {
+    param($Wert)
+
+    if ($Wert -is [int] -or $Wert -is [long] -or $Wert -is [double] -or $Wert -is [decimal]) {
+        return [string]$Wert
+    }
+
+    "'{0}'" -f $Wert
+}
+
 function ConvertTo-HtmlText {
     param([string]$Text)
 
@@ -107,9 +117,20 @@ foreach ($eintrag in $paket.skripte) {
         }
     }
 
+    # Nur fuer die Anzeige. Zeichenketten in Anfuehrungszeichen, Zahlen ohne, Felder
+    # durch Komma getrennt - mit "-f" wuerde ein Feld auf seinen ersten Wert schrumpfen.
     $anzeige = foreach ($name in ($argumente.Keys | Sort-Object)) {
-        if ($argumente[$name] -is [bool] -and $argumente[$name]) { "-$name" }
-        else { "-$name '{0}'" -f $argumente[$name] }
+        $wert = $argumente[$name]
+
+        if ($wert -is [bool]) {
+            if ($wert) { "-$name" }
+        }
+        elseif ($wert -is [System.Collections.IEnumerable] -and $wert -isnot [string]) {
+            "-$name " + ((@($wert) | ForEach-Object { WertAnzeigen $_ }) -join ',')
+        }
+        else {
+            "-$name " + (WertAnzeigen $wert)
+        }
     }
 
     $aufruf = ".\{0}{1}" -f ($eintrag.datei -replace '/', '\'), `

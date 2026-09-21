@@ -47,6 +47,7 @@ der Aufruf nicht erst mittendrin an einer fehlenden Berechtigung.
 | **Volltextsuche** | Durchsucht Titel, Beschreibung, Schlagwörter **und** den Skriptinhalt |
 | **Syntaxhervorhebung** | PowerShell-Quelltext farblich aufbereitet (Kommentare, Cmdlets, Variablen, Parameter) |
 | **Parameter-Assistent** | Liest den `param()`-Block aus und baut daraus ein Formular — Textfeld, Auswahlliste oder Haken je nach Typ. Daraus entsteht die fertige Aufrufzeile |
+| **Prüfpakete** | Mehrere Skripte ankreuzen und als Ordner mitnehmen: Dateien, Läufer und HTML-Bericht |
 | **In PowerShell öffnen** | Öffnet eine Sitzung im Skriptverzeichnis und legt den Aufruf bereit — ausgeführt wird nichts |
 | **Zwischenablage** | Das vollständige Skript mit einem Klick kopieren |
 | **Als `.ps1` speichern** | Export mit UTF-8-BOM, damit Windows PowerShell 5.1 die Umlaute korrekt liest |
@@ -177,9 +178,22 @@ dotnet publish src\AdminWerk -c Release -r win-x64 --self-contained false -o ver
   "datei": "system/mein-skript.ps1",
   "tags": ["Beispiel"],
   "adminRechte": true,
+  "veraendert": false,
   "voraussetzung": "Windows 10/11"
 }
 ```
+
+`veraendert` sagt, ob das Skript am System etwas ändern kann. Hat es dafür einen Schalter,
+der es auf einen reinen Prüflauf beschränkt, kommt der als `sichererSchalter` dazu — das
+[Prüfpaket](#prüfpakete) setzt ihn dann selbsttätig:
+
+```json
+  "veraendert": true,
+  "sichererSchalter": "-NurPruefen"
+```
+
+`katalog-pruefen.ps1` gleicht beide Felder mit dem `param()`-Block ab; wer ein `-Anwenden`
+oder `-NurPruefen` einbaut und die Kennzeichnung vergisst, bekommt es gemeldet.
 
 3. In der Anwendung auf **Neu laden** klicken — ein Neustart ist nicht nötig.
 
@@ -221,6 +235,58 @@ Der `param()`-Block wird dafür selbst gelesen: der PowerShell-Parser lebt in
 `ParameterDienst` ist deshalb kein vollständiger PowerShell-Parser, sondern beherrscht den
 Stil, in dem der Katalog geschrieben ist. Geprüft wurde er gegen den echten Parser: bei
 allen 126 Parametern stimmen Name, Typ, Pflichtangabe und `ValidateSet` überein.
+
+---
+
+## Prüfpakete
+
+Der wirkliche Arbeitsablauf ist selten „ein Skript". Er ist: *ich sitze vor einem fremden
+Server und will wissen, wie er dasteht.* Dafür kreuzt man in der Liste an, was dazugehört —
+der Haken neben dem Stern — und klickt unten auf **Paket erzeugen**. Der Stern merkt sich
+dauerhaft, der Haken sammelt für das nächste Paket.
+
+Heraus kommt ein Ordner, den man auf das Zielsystem trägt:
+
+```
+AdminWerk-Pruefpaket_2026-09-21_1743/
+├── Start-Pruefung.ps1      der Läufer
+├── paket.json              was zu laufen hat, mit welchen Parametern
+├── LIESMICH.md             Inhalt und Hinweise
+├── security/…              die ausgewählten Skripte
+└── system/…
+```
+
+Dort dann:
+
+```powershell
+.\Start-Pruefung.ps1 -Oeffnen
+```
+
+Der Läufer ruft jedes Skript einmal auf und fängt dessen Ausgabe mit `*>&1` ein — damit
+auch alles, was über `Write-Host` geht. Der Bericht hält je Prüfung fest, ob der Lauf
+durchging (`OK`, `HINWEIS`, `FEHLER`), wie lange er dauerte und was dabei herauskam.
+Fällt ein Skript um, laufen die übrigen weiter.
+
+**Ein Prüfpaket verändert nichts.** Von den 51 Skripten können 5 etwas am System ändern.
+Drei davon sind ohne `-Anwenden` ohnehin ein Testlauf; zwei — Dienste starten,
+Systemdateien reparieren — ändern ohne Zutun und sind erst mit `-NurPruefen` zahm. Welcher
+Schalter ein Skript zähmt, steht im Katalog als `sichererSchalter`, und der Läufer setzt
+ihn selbsttätig. Setzt man `-Anwenden` im Assistenten, bleibt dieser Schalter beim Paket
+außen vor: er gilt dem Einzelaufruf in der PowerShell, nicht einem Auditlauf.
+
+Damit das Feld nicht von Hand verrutscht, prüft `katalog-pruefen.ps1` es gegen den
+`param()`-Block — Kennzeichnung und Schalter müssen zum Quelltext passen.
+
+Werte aus dem [Parameter-Assistenten](#parameter-assistent) wandern mit ins Paket. Wer
+`-Computername SRV01, SRV02` einträgt, bekommt sie im Läufer wieder:
+
+```json
+"argumente": { "Computername": ["SRV01", "SRV02"], "NurPruefen": true }
+```
+
+Als Name-Wert-Paare, nicht als Zeichenkette: PowerShell verteilt ein gesplattetes Feld der
+Reihe nach auf die Stellungsparameter, `-NurPruefen` wäre dann ein Dienstname und kein
+Schalter.
 
 ---
 
@@ -307,7 +373,10 @@ AdminWerk/
     ├── MainWindow.xaml(.cs)    Hauptfenster
     ├── Models/                 ScriptEintrag, ScriptKategorie, ScriptKatalog, SkriptParameter
     ├── Services/               KatalogDienst (catalog.json + .ps1), FavoritenDienst,
-    │                           ParameterDienst (param()-Block und Aufrufzeile)
+    │                           ParameterDienst (param()-Block und Aufrufzeile),
+    │                           PaketDienst (stellt Prüfpakete zusammen)
+    ├── Vorlagen/
+    │   └── Start-Pruefung.ps1  Läufer, der in jedes Prüfpaket kopiert wird
     ├── ViewModels/             HauptViewModel, AktionsBefehl, ViewModelBasis
     ├── Views/                  PowerShellHervorhebung — Syntaxeinfärbung
     ├── Themes/                 Palette.xaml, Steuerelemente.xaml

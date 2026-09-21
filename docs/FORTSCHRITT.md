@@ -9,10 +9,12 @@ wurden und was als Nächstes ansteht.
 
 ### Ergebnis
 
-Vier Dinge, in dieser Reihenfolge: eine **CI**, die einlöst was das README zusichert, ein
+Fünf Dinge, in dieser Reihenfolge: eine **CI**, die einlöst was das README zusichert, ein
 **Parameter-Assistent**, der aus dem `param()`-Block ein Formular baut, **In PowerShell
 öffnen** als Weg von der Anwendung in die Sitzung — ohne dass AdminWerk etwas ausführt —
-und zum Schluss **Oberflächentests**, die auf dem GitHub-Runner mitlaufen.
+**Oberflächentests**, die auf dem GitHub-Runner mitlaufen, und zuletzt die **Prüfpakete**:
+mehrere Skripte ankreuzen, als Ordner mitnehmen, auf dem Zielsystem einen HTML-Bericht
+erzeugen.
 
 | | Vorher | Nachher |
 |---|---|---|
@@ -20,6 +22,8 @@ und zum Schluss **Oberflächentests**, die auf dem GitHub-Runner mitlaufen.
 | Parameter je Skript | im Quelltext nachlesen | Formular mit fertiger Aufrufzeile |
 | Weg in die PowerShell | Skript kopieren, Sitzung suchen | eine Schaltfläche |
 | Oberfläche geprüft | von Hand | 40 Prüfungen, auch in der CI |
+| Mehrere Skripte auf einem System | einzeln kopieren und starten | ein Paket, ein Bericht |
+| Kaputte Skripte im Katalog | 3 (unbemerkt) | 0, und eine Regel dagegen |
 
 Angefangen hat der Tag mit etwas anderem: beim Starten der Anwendung meldete die
 UI-Automation für jeden Listeneintrag `AdminWerk.Models.ScriptKategorie` statt der
@@ -135,6 +139,68 @@ Feld übergeben lässt das Cmdlet scheitern, die Variable bleibt leer, und der S
 meldet fälschlich „keine Befunde". Eine Prüfung, die nichts prüft und trotzdem grün ist,
 ist schlimmer als keine. Jetzt zwei Durchläufe, gegen eine fehlerhafte Datei gegengeprüft.
 
+### Prüfpakete
+
+Der erste Teil steht: ankreuzen, **Paket erzeugen**, fertig ist ein Ordner mit den
+Skripten, `paket.json`, einer Liesmich und `Start-Pruefung.ps1`. Der Läufer ruft jedes
+Skript einmal auf, fängt die Ausgabe mit `*>&1` ein — damit auch alles aus `Write-Host` —
+und schreibt einen HTML-Bericht mit Übersichtstabelle und einem Block je Prüfung.
+
+Die Auswahl sitzt als Haken neben dem Stern in der Liste. Zwei Marken für zwei Dinge: der
+Stern merkt sich dauerhaft, der Haken sammelt für das nächste Paket. Sie überlebt das
+Neuladen, ist aber bewusst nicht gespeichert — ein Paket ist eine Zusammenstellung für den
+Augenblick.
+
+**Der Läufer liegt als Vorlage im Projekt, nicht als Zeichenkette im C#-Code.** Sonst
+wäre er der einzige PowerShell-Code im Repository, den weder der Parser noch
+PSScriptAnalyzer je ansieht. Als Datei unter `Vorlagen/` läuft er durch dieselbe Prüfung
+wie der Katalog — und das hat sich sofort ausgezahlt: der Analyzer meldete, dass eine
+Hilfsfunktion das eingebaute `ConvertTo-Html` überschreibt.
+
+**Entscheidung: der sichere Schalter steht im Katalog, nicht im Code.** Von 51 Skripten
+ändern 5 etwas. Drei sind ohne `-Anwenden` ohnehin ein Testlauf; zwei ändern ohne Zutun
+und brauchen `-NurPruefen`. Welcher Schalter welches Skript zähmt, ist Katalogwissen und
+steht als `sichererSchalter` dort. Damit das Feld nicht von Hand verrutscht, gleicht
+`katalog-pruefen.ps1` es gegen den `param()`-Block ab. Drei absichtlich falsche
+Kennzeichnungen wurden alle drei gemeldet.
+
+Werte aus dem Parameter-Assistenten wandern mit ins Paket. Dafür werden die gelesenen
+Parameter jetzt je Skript behalten statt bei jedem Wechsel neu geparst — was nebenbei
+einen Ärger behebt, den vorher niemand benannt hatte: Eingaben gingen beim Skriptwechsel
+verloren. Setzt jemand `-Anwenden`, bleibt dieser Schalter beim Paket außen vor. Er gilt
+dem Einzelaufruf in der PowerShell, nicht einem Auditlauf über mehrere Systeme.
+
+### Drei Fehler, die erst der Paketlauf zeigte
+
+**Drei Skripte im Katalog haben nie funktioniert.** Beim ersten Paketlauf fiel
+`autostart-programme.ps1` sofort um. Der Backslash stand in fünf Mustern einfach statt
+doppelt:
+
+| Muster | Fehler |
+|---|---|
+| `'^[A-Za-z]:\(Program Files\|…)\'` | zu viele `)`-Zeichen |
+| `'^HKLM:\SOFTWARE\'` | `\S` ist eine Zeichenklasse, `\` am Ende ungültig |
+| `-split '\'` | ein Backslash allein ist kein Muster |
+
+Betroffen waren zwei Security-Skripte und die Auflistung lokaler Administratoren — alle
+drei werfen beim ersten Datensatz. Weder der Parser noch PSScriptAnalyzer sehen so etwas:
+ein Muster ist erst zur Laufzeit ein Muster. Seitdem übersetzt `katalog-pruefen.ps1` alle
+Regex-Literale. Der erste Anlauf übersah die rechte Seite von `-replace`, wo Muster und
+Ersatz als Feld stehen — und hätte damit zwei der fünf Stellen durchgelassen.
+
+**Der sichere Schalter kam gar nicht an.** Im ersten Bericht stand in der Dienstetabelle
+eine Zeile `-NurPruefen | NICHT VORHANDEN`. PowerShell verteilt ein gesplattetes **Feld**
+der Reihe nach auf die Stellungsparameter; `-NurPruefen` war also ein Dienstname. Dass
+nichts gestartet wurde, war Zufall — `-Dienste` war damit überschrieben. Jetzt eine
+Hashtabelle. Nachgemessen: der Lauf meldet den gestoppten Dienst und lässt ihn stehen.
+
+Das ist der Grund, warum der Bericht angesehen und nicht nur erzeugt wurde. Programmatisch
+stimmte alles: Datei da, Exitcode 0, HTML wohlgeformt.
+
+**`$LASTEXITCODE` ist klebrig.** Skripte, die nicht selbst `exit` aufrufen, lassen den
+Wert des vorigen stehen. Im ersten Lauf waren dadurch alle sechs Prüfungen `HINWEIS`,
+weil die erste einen ausstehenden Neustart meldete. Wird vor jedem Aufruf zurückgesetzt.
+
 ### Geprüft
 
 * `dotnet build` in `Release` mit `-warnaserror` — 0 Warnungen, 0 Fehler
@@ -149,6 +215,11 @@ ist schlimmer als keine. Jetzt zwei Durchläufe, gegen eine fehlerhafte Datei ge
   ausgelöst und die Befehlszeile des erzeugten Prozesses nachgelesen
 * Beide Oberflächentests örtlich **und** auf dem GitHub-Runner — 40 von 40 Prüfungen,
   51 Skripte ohne Auffälligkeit
+* Prüfpakete erzeugt **und ausgeführt**: der Dienstelauf meldet den gestoppten Dienst,
+  statt ihn zu starten; `-Anwenden` kommt im Paket nicht an; das Konto aus dem
+  Testlauf wurde nicht angelegt; Felder und Zahlen binden als das, was sie sind
+* Der Bericht im Browser angesehen, nicht nur erzeugt — nur so fiel der Fehler beim
+  Splatten auf
 
 ### Aufgefallen
 
@@ -167,7 +238,9 @@ ist schlimmer als keine. Jetzt zwei Durchläufe, gegen eine fehlerhafte Datei ge
 
 ### Als Nächstes
 
-* [ ] Prüfpakete: mehrere Skripte auswählen und als Paket mit HTML-Bericht exportieren
+* [x] ~~Prüfpakete: mehrere Skripte auswählen und als Paket mit HTML-Bericht exportieren~~
+* [ ] Prüfpakete weiterdenken: Paket als ZIP statt als Ordner, mehrere Zielsysteme in
+      einem Bericht, Zusammenstellungen speichern und wiederverwenden
 * [ ] Katalog um weitere Bereiche erweitern: Drucker, Hyper-V, Zertifikate, Exchange
 * [ ] Suchfeld über `Strg+F` erreichbar machen, Tastaturbedienung insgesamt schärfen
 * [ ] Überlegen, ob rein lesende Skripte ihren Bericht in der Anwendung anzeigen dürfen —

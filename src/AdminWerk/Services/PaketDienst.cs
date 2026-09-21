@@ -34,8 +34,16 @@ public sealed class PaketDienst
     }
 
     /// <summary>Schreibt das Paket nach <paramref name="zielordner"/>.</summary>
+    /// <param name="parameterFuer">
+    /// Liefert die Parameter eines Skripts samt der Werte, die im Assistenten stehen.
+    /// Ohne Angabe bekommt jedes Skript nur seinen sicheren Schalter.
+    /// </param>
     /// <returns>Die Anzahl der aufgenommenen Skripte.</returns>
-    public int Erzeugen(string zielordner, string paketName, IReadOnlyList<ScriptEintrag> skripte)
+    public int Erzeugen(
+        string zielordner,
+        string paketName,
+        IReadOnlyList<ScriptEintrag> skripte,
+        Func<ScriptEintrag, IReadOnlyList<SkriptParameter>>? parameterFuer = null)
     {
         if (skripte.Count == 0)
         {
@@ -68,17 +76,7 @@ public sealed class PaketDienst
             Directory.CreateDirectory(Path.GetDirectoryName(ziel)!);
             File.Copy(quelle, ziel, overwrite: true);
 
-            // Der sichere Schalter kommt aus dem Katalog und ist dort gegen den
-            // Quelltext geprueft. Ohne ihn wuerde ein Auditlauf Dienste starten.
-            //
-            // Als Name-Wert-Paar, nicht als Zeichenkette: PowerShell verteilt ein
-            // gesplattetes Feld auf die Parameter der Reihe nach. "-NurPruefen" waere
-            // dann der erste Stellungsparameter und nicht der Schalter.
-            var argumente = new Dictionary<string, object>();
-            if (!string.IsNullOrWhiteSpace(skript.SichererSchalter))
-            {
-                argumente[skript.SichererSchalter.Trim().TrimStart('-')] = true;
-            }
+            var argumente = Argumente(skript, parameterFuer?.Invoke(skript));
 
             eintraege.Add(new PaketEintrag
             {
@@ -114,6 +112,82 @@ public sealed class PaketDienst
             ohneStueckliste);
 
         return eintraege.Count;
+    }
+
+    /// <summary>
+    /// Baut die Aufrufargumente eines Skripts: die Eingaben aus dem Assistenten,
+    /// darueber der sichere Schalter aus dem Katalog.
+    /// </summary>
+    /// <remarks>
+    /// Als Name-Wert-Paare, nicht als Zeichenkette: PowerShell verteilt ein
+    /// gesplattetes Feld der Reihe nach auf die Stellungsparameter, "-NurPruefen"
+    /// waere dann ein Dienstname und kein Schalter.
+    ///
+    /// Bei veraendernden Skripten bleiben gesetzte Schalter aussen vor. Ein Paket ist
+    /// ein Pruefpaket; wer "-Anwenden" im Assistenten setzt, meint den Einzelaufruf in
+    /// der PowerShell, nicht einen Auditlauf ueber mehrere Systeme.
+    /// </remarks>
+    private static Dictionary<string, object> Argumente(
+        ScriptEintrag skript, IReadOnlyList<SkriptParameter>? parameter)
+    {
+        var argumente = new Dictionary<string, object>();
+
+        foreach (var p in parameter ?? [])
+        {
+            if (p.IstSchalter)
+            {
+                if (p.Gesetzt && !skript.Veraendert)
+                {
+                    argumente[p.Name] = true;
+                }
+
+                continue;
+            }
+
+            var wert = p.Wert.Trim();
+            if (wert.Length == 0)
+            {
+                continue;
+            }
+
+            argumente[p.Name] = WertFuerJson(p, wert);
+        }
+
+        // Zuletzt, damit er nicht zu ueberschreiben ist.
+        if (!string.IsNullOrWhiteSpace(skript.SichererSchalter))
+        {
+            argumente[skript.SichererSchalter.Trim().TrimStart('-')] = true;
+        }
+
+        return argumente;
+    }
+
+    private static object WertFuerJson(SkriptParameter p, string wert)
+    {
+        if (!p.IstListe)
+        {
+            return p.IstZahl && long.TryParse(wert, out var zahl) ? zahl : wert;
+        }
+
+        // Mehrere Werte trennt der Benutzer durch Komma - dasselbe wie im Assistenten.
+        var teile = wert.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        if (teile.Length == 0)
+        {
+            return wert;
+        }
+
+        if (!p.IstZahl)
+        {
+            return teile;
+        }
+
+        var zahlen = new List<object>();
+        foreach (var teil in teile)
+        {
+            zahlen.Add(long.TryParse(teil, out var z) ? z : teil);
+        }
+
+        return zahlen.ToArray();
     }
 
     private static string Liesmich(Paket paket)
