@@ -74,13 +74,14 @@ jobs:
           Write-Host ("{0} Befund(e)." -f $befunde.Count)
           exit 1
 
-  # Versuch: laeuft die UI-Automation auf einem GitHub-Runner? Der Auftrag darf
-  # scheitern, ohne den Rest rot zu faerben - er soll erst einmal nur Auskunft geben.
+  # Der Runner hat eine Sitzung mit Bildschirm (SessionId 2, 1024x768), die WPF-
+  # Anwendung oeffnet dort ein Fenster und die UI-Automation kann es bedienen.
+  # Das Zeitlimit ist die Notbremse: haengt die Oberflaeche, laeuft der Auftrag
+  # sonst bis zum Anschlag.
   oberflaeche:
-    name: Oberflaechentests (Versuch)
+    name: Oberflaechentests
     runs-on: windows-latest
     timeout-minutes: 20
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v5
 
@@ -91,52 +92,16 @@ jobs:
       - name: Bauen
         run: dotnet build AdminWerk.sln --configuration Debug
 
+      # Kostet eine Sekunde und steht im Protokoll, wenn die Tests spaeter einmal
+      # ohne erkennbaren Grund scheitern: dann zuerst hier nachsehen.
       - name: Sitzung beschreiben
         shell: powershell
         run: |
-          $ich = [System.Diagnostics.Process]::GetCurrentProcess()
-          Write-Host ("UserInteractive : {0}" -f [Environment]::UserInteractive)
-          Write-Host ("SessionId       : {0}" -f $ich.SessionId)
-          Write-Host ("Benutzer        : {0}" -f [Environment]::UserName)
-          Write-Host ("Fenstertitel    : '{0}'" -f $Host.UI.RawUI.WindowTitle)
           Add-Type -AssemblyName System.Windows.Forms
+          Write-Host ("UserInteractive : {0}" -f [Environment]::UserInteractive)
+          Write-Host ("SessionId       : {0}" -f [System.Diagnostics.Process]::GetCurrentProcess().SessionId)
           Write-Host ("Bildschirme     : {0}" -f [System.Windows.Forms.Screen]::AllScreens.Count)
           Write-Host ("Aufloesung      : {0}" -f [System.Windows.Forms.SystemInformation]::PrimaryMonitorSize)
-
-      - name: Oeffnet die Anwendung ueberhaupt ein Fenster?
-        shell: powershell
-        run: |
-          $exe = '.\src\AdminWerk\bin\Debug\net8.0-windows\AdminWerk.exe'
-          $p = Start-Process -FilePath $exe -PassThru
-          Start-Sleep -Seconds 8
-          $p = Get-Process -Id $p.Id -ErrorAction SilentlyContinue
-
-          if (-not $p) {
-              Write-Host 'Der Prozess hat sich sofort beendet.'
-              exit 1
-          }
-
-          Write-Host ("Prozess laeuft      : {0}" -f (-not $p.HasExited))
-          Write-Host ("MainWindowHandle    : {0}" -f $p.MainWindowHandle)
-          Write-Host ("Fenstertitel        : '{0}'" -f $p.MainWindowTitle)
-
-          if ($p.MainWindowHandle -eq 0) {
-              Write-Host 'Kein Fenster - UI-Automation ist hier nicht moeglich.'
-              Stop-Process -Id $p.Id -Force
-              exit 1
-          }
-
-          Add-Type -AssemblyName UIAutomationClient, UIAutomationTypes
-          $wurzel = [System.Windows.Automation.AutomationElement]::FromHandle($p.MainWindowHandle)
-          $bedingung = New-Object System.Windows.Automation.PropertyCondition(
-              [System.Windows.Automation.AutomationElement]::ControlTypeProperty,
-              [System.Windows.Automation.ControlType]::ListItem)
-          $eintraege = @($wurzel.FindAll([System.Windows.Automation.TreeScope]::Descendants, $bedingung))
-          Write-Host ("Elemente im Baum    : {0}" -f $eintraege.Count)
-          Write-Host ("Erste Namen         : {0}" -f (($eintraege | Select-Object -First 6 |
-              ForEach-Object { $_.Current.Name }) -join ' | '))
-
-          Stop-Process -Id $p.Id -Force
 
       - name: Oberflaechentest
         shell: powershell
