@@ -9,9 +9,17 @@ wurden und was als Nächstes ansteht.
 
 ### Ergebnis
 
-Drei Dinge, in dieser Reihenfolge: eine **CI**, die einlöst was das README zusichert, ein
-**Parameter-Assistent**, der aus dem `param()`-Block ein Formular baut, und **In PowerShell
-öffnen** als Weg von der Anwendung in die Sitzung — ohne dass AdminWerk etwas ausführt.
+Vier Dinge, in dieser Reihenfolge: eine **CI**, die einlöst was das README zusichert, ein
+**Parameter-Assistent**, der aus dem `param()`-Block ein Formular baut, **In PowerShell
+öffnen** als Weg von der Anwendung in die Sitzung — ohne dass AdminWerk etwas ausführt —
+und zum Schluss **Oberflächentests**, die auf dem GitHub-Runner mitlaufen.
+
+| | Vorher | Nachher |
+|---|---|---|
+| Automatische Prüfung | keine | 3 Aufträge bei jedem Push |
+| Parameter je Skript | im Quelltext nachlesen | Formular mit fertiger Aufrufzeile |
+| Weg in die PowerShell | Skript kopieren, Sitzung suchen | eine Schaltfläche |
+| Oberfläche geprüft | von Hand | 40 Prüfungen, auch in der CI |
 
 Angefangen hat der Tag mit etwas anderem: beim Starten der Anwendung meldete die
 UI-Automation für jeden Listeneintrag `AdminWerk.Models.ScriptKategorie` statt der
@@ -31,10 +39,14 @@ Vorher scheiterte genau das.
 
 ### CI
 
-`.github/workflows/pruefung.yml` prüft bei jedem Push und Pull Request den Release-Build
-(Warnungen als Fehler) und den Skriptkatalog. `tools/katalog-pruefen.ps1` erledigt Syntax,
-Katalogabgleich und Pflichtangaben in einem Durchlauf und läuft bewusst unter Windows
-PowerShell 5.1.
+`.github/workflows/pruefung.yml` prüft bei jedem Push und Pull Request drei Dinge: den
+Release-Build (Warnungen als Fehler), den Skriptkatalog und — seit dem Abend des Tages —
+die Oberfläche. `tools/katalog-pruefen.ps1` erledigt Syntax, Katalogabgleich und
+Pflichtangaben in einem Durchlauf und läuft bewusst unter Windows PowerShell 5.1.
+
+`actions/checkout` und `actions/setup-dotnet` stehen auf `v5`. Die `v4`-Fassungen zielen
+auf Node 20, das GitHub bereits auf Node 24 zwingt — mit Abwertungshinweis bei jedem Lauf.
+Seit der Anhebung ist das Protokoll ohne Anmerkungen.
 
 ### Entscheidungen
 
@@ -160,6 +172,10 @@ ist schlimmer als keine. Jetzt zwei Durchläufe, gegen eine fehlerhafte Datei ge
 * [ ] Suchfeld über `Strg+F` erreichbar machen, Tastaturbedienung insgesamt schärfen
 * [ ] Überlegen, ob rein lesende Skripte ihren Bericht in der Anwendung anzeigen dürfen —
       `catalog.json` bräuchte dafür ein Feld, das die CI gegenprüft
+* [ ] Die Oberflächentests ein paar Wochen beobachten. Sie sind blockierend, und vier
+      grüne Läufe sagen über Flattern auf einem geteilten Runner noch nichts. Wackeln
+      sie, zuerst ins Protokoll von „Sitzung beschreiben" sehen; notfalls zurück auf
+      `continue-on-error`, das ist eine Zeile.
 
 ---
 
