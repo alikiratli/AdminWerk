@@ -95,6 +95,34 @@ Aufgeklappt verdrängt er bei sieben Parametern den Quelltext vollständig aus d
 und der ist der Hauptinhalt der Detailansicht. Die Kopfzeile nennt die Anzahl und lädt zum
 Aufklappen ein.
 
+### Oberflächentests — und der Runner als zweite Meinung
+
+Zum Schluss wanderten die beiden Tests, mit denen die Oberfläche bis dahin von Hand
+geprüft wurde, nach `tools/`: `oberflaechentest.ps1` (40 Einzelprüfungen) und
+`alle-skripte-durchgehen.ps1` (jedes Skript des Katalogs einmal ausgewählt).
+
+Die offene Frage war, ob UI-Automation auf einem GitHub-Runner überhaupt möglich ist. Sie
+ist es: die Sitzung ist `UserInteractive`, hat `SessionId 2` und einen Bildschirm mit
+1024×768. Die WPF-Anwendung öffnet dort ein Fenster, und die Automation sieht den Baum.
+Der Auftrag braucht knapp drei Minuten und läuft neben den anderen beiden.
+
+Der Runner hat sich dabei sofort bezahlt gemacht: 34 der 40 Prüfungen liefen durch, sechs
+fielen — alle mit derselben Meldung, `Suche` sei kein bekannter Befehl. Ursache war eine
+Closure über `.GetNewClosure()`: sie führt die **Variablen** des Skripts mit, aber nicht
+zuverlässig seine **Funktionen**. Örtlich lief es trotzdem, auf dem Runner nicht. Ein
+Fehler, den nur eine zweite Umgebung zeigt.
+
+Gleich mit aufgefallen: auf dem Runner gibt es keine `favoriten.json`. Der Test legt beim
+Favoritenklick eine an, und die Wiederherstellung sagte bis dahin nur „ohne Sicherung
+nichts tun" — die Datei wäre liegen geblieben. Jetzt löscht der Test, was es vorher nicht
+gab.
+
+**Entscheidung: PSScriptAnalyzer prüft auch `tools/` mit.** Neue Werkzeuge sollen nicht
+ungeprüft bleiben. Dabei zeigte sich, dass `-Path` nur einen Pfad annimmt: zwei Pfade als
+Feld übergeben lässt das Cmdlet scheitern, die Variable bleibt leer, und der Schritt
+meldet fälschlich „keine Befunde". Eine Prüfung, die nichts prüft und trotzdem grün ist,
+ist schlimmer als keine. Jetzt zwei Durchläufe, gegen eine fehlerhafte Datei gegengeprüft.
+
 ### Geprüft
 
 * `dotnet build` in `Release` mit `-warnaserror` — 0 Warnungen, 0 Fehler
@@ -107,6 +135,8 @@ Aufklappen ein.
   aufgeteilt, Schalter binden als `SwitchParameter`, `O''Connor` kommt als `O'Connor` an
 * Anwendung gestartet, Assistent über UI-Automation bedient, *In PowerShell öffnen*
   ausgelöst und die Befehlszeile des erzeugten Prozesses nachgelesen
+* Beide Oberflächentests örtlich **und** auf dem GitHub-Runner — 40 von 40 Prüfungen,
+  51 Skripte ohne Auffälligkeit
 
 ### Aufgefallen
 
@@ -115,6 +145,9 @@ Aufklappen ein.
   nur `$a` und wirft. Es braucht eine zweite Klammer.
 * `Resolve-Path -Relative` und die GitHub-Annotationssyntax vertragen sich gut — der CI-Lauf
   markiert Befunde direkt im Diff.
+* Windows PowerShell 5.1 liest eine `.ps1` ohne BOM als ANSI. `oberflaechentest.ps1`
+  vergleicht Beschriftungen der Oberfläche und braucht deshalb Umlaute — und damit ein BOM,
+  sonst schlagen alle Vergleiche fehl. Dieselbe Regel, die schon für den `.ps1`-Export gilt.
 * Ein Bildschirmfoto über `SetForegroundWindow` greift das falsche Fenster ab: Windows lässt
   Hintergrundprozesse den Fokus nicht stehlen. `PrintWindow` mit `PW_RENDERFULLCONTENT` holt
   die Fensterpixel unabhängig von der Stapelreihenfolge — und der aufrufende Prozess muss

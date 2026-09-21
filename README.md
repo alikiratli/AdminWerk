@@ -226,28 +226,31 @@ allen 126 Parametern stimmen Name, Typ, Pflichtangabe und `ValidateSet` überein
 
 ## Prüfung
 
-Jeder Push und jeder Pull Request auf `main` läuft durch zwei Aufträge
+Jeder Push und jeder Pull Request auf `main` läuft durch drei Aufträge
 (`.github/workflows/pruefung.yml`):
 
 | Auftrag | Was geprüft wird |
 |---|---|
 | **Anwendung bauen** | `dotnet build` in `Release`, Warnungen gelten als Fehler |
 | **Skriptkatalog prüfen** | Syntax, Katalogabgleich, Pflichtangaben, PSScriptAnalyzer |
+| **Oberflächentests** | Die Anwendung wird gestartet und über die UI-Automation bedient |
 
-Beides lässt sich vor dem Commit lokal ausführen:
+Alles davon lässt sich vor dem Commit lokal ausführen:
 
 ```powershell
 # Syntax, Katalogabgleich und Pflichtangaben
 .\tools\katalog-pruefen.ps1
 
-# Stilregeln
+# Stilregeln - auch über die Werkzeuge selbst
 Invoke-ScriptAnalyzer -Path .\src\AdminWerk\Scripts -Recurse `
+    -Settings .\tools\PSScriptAnalyzerSettings.psd1
+Invoke-ScriptAnalyzer -Path .\tools -Recurse `
     -Settings .\tools\PSScriptAnalyzerSettings.psd1
 ```
 
-Dazu kommen zwei Tests, die die **Oberfläche** über die UI-Automation bedienen. Sie
-brauchen eine angemeldete Sitzung mit Bildschirm und laufen deshalb von Hand, nicht in der
-CI:
+Die beiden Oberflächentests bedienen die Anwendung über die UI-Automation. Sie brauchen
+eine Sitzung mit Bildschirm — die hat der Windows-Runner (`SessionId 2`, 1024×768), also
+laufen sie in der CI ebenso wie von Hand:
 
 ```powershell
 # Klickt sich durch Kategorien, Suche, Parameterassistent, Favoriten und
