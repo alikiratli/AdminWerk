@@ -245,6 +245,24 @@ Invoke-ScriptAnalyzer -Path .\src\AdminWerk\Scripts -Recurse `
     -Settings .\tools\PSScriptAnalyzerSettings.psd1
 ```
 
+Dazu kommen zwei Tests, die die **Oberfläche** über die UI-Automation bedienen. Sie
+brauchen eine angemeldete Sitzung mit Bildschirm und laufen deshalb von Hand, nicht in der
+CI:
+
+```powershell
+# Klickt sich durch Kategorien, Suche, Parameterassistent, Favoriten und
+# "In PowerShell öffnen" — 40 Einzelprüfungen mit Bilanz am Ende
+.\tools\oberflaechentest.ps1
+
+# Wählt jedes Skript des Katalogs einmal aus und prüft, ob der Assistent
+# für jeden param()-Block eine Aufrufzeile erzeugt
+.\tools\alle-skripte-durchgehen.ps1
+```
+
+Beide starten die Anwendung selbst, schließen sie am Ende wieder und liefern 0 oder 1
+zurück. Der Oberflächentest sichert die Favoritendatei vorher und stellt sie hinterher
+wieder her — ein Test darf keine Spuren hinterlassen.
+
 `katalog-pruefen.ps1` prüft in einem Durchlauf:
 
 1. **Syntax** — jede `.ps1` wird mit dem PowerShell-Parser eingelesen.
@@ -277,6 +295,8 @@ AdminWerk/
 ├── tools/
 │   ├── logo-erzeugen.py        erzeugt Bildmarke, Wortmarke und .ico
 │   ├── katalog-pruefen.ps1     Syntax, Abgleich, Pflichtangaben
+│   ├── oberflaechentest.ps1    bedient die Oberfläche über UI-Automation
+│   ├── alle-skripte-durchgehen.ps1   Assistent gegen jedes Skript im Katalog
 │   └── PSScriptAnalyzerSettings.psd1
 └── src/AdminWerk/
     ├── AdminWerk.csproj

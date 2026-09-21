@@ -50,8 +50,14 @@ jobs:
         shell: powershell
         run: |
           Import-Module PSScriptAnalyzer
-          $befunde = Invoke-ScriptAnalyzer -Path .\src\AdminWerk\Scripts -Recurse `
-              -Settings .\tools\PSScriptAnalyzerSettings.psd1
+
+          # Auch die Werkzeuge selbst: neue Skripte sollen nicht ungeprueft bleiben.
+          # -Path nimmt nur einen Pfad, deshalb zwei Durchlaeufe.
+          $befunde = @()
+          foreach ($pfad in '.\src\AdminWerk\Scripts', '.\tools') {
+              $befunde += Invoke-ScriptAnalyzer -Path $pfad -Recurse `
+                  -Settings .\tools\PSScriptAnalyzerSettings.psd1
+          }
 
           if (-not $befunde) {
               Write-Host 'Keine Befunde.' -ForegroundColor Green
