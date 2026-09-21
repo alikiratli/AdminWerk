@@ -30,6 +30,12 @@ Modulen, sofort einsatzbereit.
 bewusst von Hand in einer PowerShell-Sitzung, in der die Administratorin oder der Administrator
 den Inhalt vorher gelesen hat.
 
+**In PowerShell öffnen** nimmt einem nur den Weg dorthin ab: die Sitzung startet im
+Skriptverzeichnis, der vorbereitete Aufruf steht als Text im Fenster und in der
+Zwischenablage. Gedrückt wird die Eingabetaste von einem Menschen. Braucht das Skript
+erhöhte Rechte, wird die Sitzung über die Benutzerkontensteuerung angefordert — so scheitert
+der Aufruf nicht erst mittendrin an einer fehlenden Berechtigung.
+
 ---
 
 ## Funktionen
@@ -41,6 +47,7 @@ den Inhalt vorher gelesen hat.
 | **Volltextsuche** | Durchsucht Titel, Beschreibung, Schlagwörter **und** den Skriptinhalt |
 | **Syntaxhervorhebung** | PowerShell-Quelltext farblich aufbereitet (Kommentare, Cmdlets, Variablen, Parameter) |
 | **Parameter-Assistent** | Liest den `param()`-Block aus und baut daraus ein Formular — Textfeld, Auswahlliste oder Haken je nach Typ. Daraus entsteht die fertige Aufrufzeile |
+| **In PowerShell öffnen** | Öffnet eine Sitzung im Skriptverzeichnis und legt den Aufruf bereit — ausgeführt wird nichts |
 | **Zwischenablage** | Das vollständige Skript mit einem Klick kopieren |
 | **Als `.ps1` speichern** | Export mit UTF-8-BOM, damit Windows PowerShell 5.1 die Umlaute korrekt liest |
 | **Kennzeichnung** | Jedes Skript zeigt Kategorie, benötigte Rechte und Voraussetzungen |

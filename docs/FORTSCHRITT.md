@@ -5,6 +5,131 @@ wurden und was als Nächstes ansteht.
 
 ---
 
+## Tag 3 — 21.09.2026
+
+### Ergebnis
+
+Drei Dinge, in dieser Reihenfolge: eine **CI**, die einlöst was das README zusichert, ein
+**Parameter-Assistent**, der aus dem `param()`-Block ein Formular baut, und **In PowerShell
+öffnen** als Weg von der Anwendung in die Sitzung — ohne dass AdminWerk etwas ausführt.
+
+Angefangen hat der Tag mit etwas anderem: beim Starten der Anwendung meldete die
+UI-Automation für jeden Listeneintrag `AdminWerk.Models.ScriptKategorie` statt der
+Beschriftung. Eine Sprachausgabe hätte nichts Brauchbares vorgelesen.
+
+### Barrierefreiheit
+
+Die `ListBoxItem`s hatten weder Textinhalt noch `AutomationProperties.Name` — WPF fällt dann
+auf `ToString()` des Modells zurück. Beide `ItemContainerStyle` setzen jetzt Name und
+HelpText aus dem Modell; die Sternschaltfläche führt den Skripttitel mit, weil dreizehn
+gleichnamige Schaltflächen in einer Liste nicht unterscheidbar wären. Das Suchfeld war
+ebenfalls namenlos: sein Platzhalter ist ein eigener `TextBlock` und gehört der Automation
+nicht zum Eingabefeld.
+
+Gegenprobe: `FindFirst(NameProperty, "Security")` findet den Reiter jetzt und wählt ihn aus.
+Vorher scheiterte genau das.
+
+### CI
+
+`.github/workflows/pruefung.yml` prüft bei jedem Push und Pull Request den Release-Build
+(Warnungen als Fehler) und den Skriptkatalog. `tools/katalog-pruefen.ps1` erledigt Syntax,
+Katalogabgleich und Pflichtangaben in einem Durchlauf und läuft bewusst unter Windows
+PowerShell 5.1.
+
+### Entscheidungen
+
+**Der Parser allein ist kein 5.1-Test.**
+Bisher galt `Parser::ParseFile` mit 0 Fehlern als Beleg für 5.1-Tauglichkeit. Nachgemessen
+stimmt das nicht. Von den beiden Konstrukten, die bisher als verboten notiert waren, erzeugt
+keines einen Parserfehler:
+
+| Konstrukt | Parser 5.1 | Laufzeit 5.1 |
+|---|---|---|
+| `$x = try { 1 } catch { 2 }` | 0 Fehler | läuft, `$x` ist 42 |
+| `-ForegroundColor (if … )` | 0 Fehler | *„if wurde nicht als Name eines Cmdlet erkannt"*, Exitcode trotzdem 0 |
+| `$a ?? 'x'`, `$a ? 1 : 2` | 1 Fehler | — |
+
+Das erste war schlicht eine Fehlannahme: `try` als Ausdruck funktioniert unter 5.1.19041.
+Das zweite scheitert erst zur Laufzeit, und der Exitcode bleibt dabei 0 — ein reiner
+Testlauf hätte es also auch nicht gemeldet. Die Prüfung sucht deshalb zusätzlich im
+Syntaxbaum nach `CommandAst`-Knoten, deren Befehlsname ein Schlüsselwort ist. Genau das ist
+die Signatur von `(if … )` in Argumentstellung.
+
+**PSScriptAnalyzer mit begründeten Ausnahmen statt roher Zahl.**
+318 Befunde beim ersten Lauf, davon 298 mal `Write-Host`. Das ist hier kein Mangel: die
+Skripte sind Konsolenwerkzeuge, die formatierte Ausgabe ist das Ergebnis. Von den übrigen 20
+waren 9 echt und sind behoben, 11 sind für dieses Projekt Fehlalarme. Die Ausnahmen stehen
+einzeln begründet in `tools/PSScriptAnalyzerSettings.psd1` — eine Ausnahme ohne Begründung
+höhlt die Prüfung aus.
+
+Die echten Befunde:
+
+* Fünf Nullvergleiche mit `$null` auf der rechten Seite. Bei einem Feld filtert
+  `$x -ne $null`, statt zu vergleichen.
+* `$profile` in `firewall-status.ps1` überschrieb eine automatische Variable.
+* `$minAlter` in `kennwortrichtlinie.ps1` wurde ausgelesen, aber nie berichtet. Das
+  Kriterium steht jetzt im Bericht: ohne Mindestalter lässt sich die Kennwortchronik
+  aushebeln, indem man das Kennwort mehrfach hintereinander wechselt.
+* Drei stumme `catch`-Blöcke protokollieren den Grund über `Write-Verbose`.
+
+**Der param()-Block wird selbst gelesen.**
+`System.Management.Automation` steht einem Projekt ohne Fremdbibliotheken nicht zur
+Verfügung. `ParameterDienst` ist deshalb kein vollständiger PowerShell-Parser, sondern
+beherrscht den Stil, in dem der Katalog geschrieben ist. Geprüft wurde er gegen den echten
+Parser: bei allen **126 Parametern** stimmen Name, Typ, Pflichtangabe und `ValidateSet`
+überein.
+
+Dieser Vergleich hat sich gelohnt. Er deckte auf, dass verschachtelte Klammern — `[string[]]`
+— sich nicht mit einem regulären Ausdruck greifen lassen; 22 Feldparameter kamen als
+`object` an. Jetzt zählt ein Durchlauf die Klammern.
+
+**Die Ausführung bleibt außerhalb.**
+Der Grundsatz von Tag 1 steht: AdminWerk führt nichts aus. *In PowerShell öffnen* startet nur
+die Sitzung im Skriptverzeichnis und legt den vorbereiteten Aufruf als Text hin — im Fenster
+und in der Zwischenablage. Die Eingabetaste drückt ein Mensch. Bei Skripten mit
+`adminRechte` wird die Sitzung über die Benutzerkontensteuerung angefordert, damit der Aufruf
+nicht erst mittendrin an einer Berechtigung scheitert.
+
+**Der Assistent ist zugeklappt voreingestellt.**
+Aufgeklappt verdrängt er bei sieben Parametern den Quelltext vollständig aus dem Fenster —
+und der ist der Hauptinhalt der Detailansicht. Die Kopfzeile nennt die Anzahl und lädt zum
+Aufklappen ein.
+
+### Geprüft
+
+* `dotnet build` in `Release` mit `-warnaserror` — 0 Warnungen, 0 Fehler
+* `katalog-pruefen.ps1` — 51 Skripte, keine Beanstandungen; gegen eine absichtlich
+  beschädigte Kopie gegengeprüft, alle fünf eingeschleusten Fehler wurden gemeldet
+* PSScriptAnalyzer mit dem Regelwerk — 0 Befunde; die Fehlerbehandlung des CI-Schritts
+  ebenfalls gegen eine fehlerhafte Datei geprüft
+* `ParameterDienst` gegen den PowerShell-Parser — 126 von 126 Parametern übereinstimmend
+* Erzeugte Aufrufzeilen wurden **ausgeführt**, nicht nur angesehen: Felder werden korrekt
+  aufgeteilt, Schalter binden als `SwitchParameter`, `O''Connor` kommt als `O'Connor` an
+* Anwendung gestartet, Assistent über UI-Automation bedient, *In PowerShell öffnen*
+  ausgelöst und die Befehlszeile des erzeugten Prozesses nachgelesen
+
+### Aufgefallen
+
+* `$liste.Add("{0} {1}" -f $a, $b)` ist in PowerShell ein Aufruf mit zwei Argumenten: das
+  Komma trennt die Methodenargumente, nicht die Formatwerte. Die Formatzeichenfolge bekommt
+  nur `$a` und wirft. Es braucht eine zweite Klammer.
+* `Resolve-Path -Relative` und die GitHub-Annotationssyntax vertragen sich gut — der CI-Lauf
+  markiert Befunde direkt im Diff.
+* Ein Bildschirmfoto über `SetForegroundWindow` greift das falsche Fenster ab: Windows lässt
+  Hintergrundprozesse den Fokus nicht stehlen. `PrintWindow` mit `PW_RENDERFULLCONTENT` holt
+  die Fensterpixel unabhängig von der Stapelreihenfolge — und der aufrufende Prozess muss
+  `SetProcessDPIAware` melden, sonst ist die Aufnahme bei Skalierung beschnitten.
+
+### Als Nächstes
+
+* [ ] Prüfpakete: mehrere Skripte auswählen und als Paket mit HTML-Bericht exportieren
+* [ ] Katalog um weitere Bereiche erweitern: Drucker, Hyper-V, Zertifikate, Exchange
+* [ ] Suchfeld über `Strg+F` erreichbar machen, Tastaturbedienung insgesamt schärfen
+* [ ] Überlegen, ob rein lesende Skripte ihren Bericht in der Anwendung anzeigen dürfen —
+      `catalog.json` bräuchte dafür ein Feld, das die CI gegenprüft
+
+---
+
 ## Tag 2 — 20.09.2026
 
 ### Ergebnis

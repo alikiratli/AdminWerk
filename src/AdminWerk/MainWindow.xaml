@@ -264,6 +264,11 @@
                                     Style="{StaticResource Schaltflaeche.Sekundaer}"
                                     Command="{Binding DataContext.SpeichernBefehl, RelativeSource={RelativeSource AncestorType=Window}}"
                                     Margin="0,0,8,0" />
+                            <Button Content="In PowerShell öffnen"
+                                    Style="{StaticResource Schaltflaeche.Sekundaer}"
+                                    Command="{Binding DataContext.InPowerShellOeffnenBefehl, RelativeSource={RelativeSource AncestorType=Window}}"
+                                    ToolTip="Öffnet eine Sitzung im Skriptverzeichnis und legt den Aufruf bereit. Ausgeführt wird nichts."
+                                    Margin="0,0,8,0" />
                             <Button Content="{Binding FavoritText}"
                                     Style="{StaticResource Schaltflaeche.Favorit}"
                                     Command="{Binding DataContext.FavoritUmschaltenBefehl, RelativeSource={RelativeSource AncestorType=Window}}"

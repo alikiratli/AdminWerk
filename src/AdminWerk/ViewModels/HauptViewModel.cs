@@ -48,6 +48,7 @@ public sealed class HauptViewModel : ViewModelBasis
         NeuLadenBefehl = new AktionsBefehl(_ => KatalogLaden());
         FavoritUmschaltenBefehl = new AktionsBefehl(FavoritUmschalten, p => (p ?? AusgewaehltesSkript) is not null);
         AufrufKopierenBefehl = new AktionsBefehl(_ => AufrufKopieren(), _ => HatParameter);
+        InPowerShellOeffnenBefehl = new AktionsBefehl(_ => InPowerShellOeffnen(), _ => AusgewaehltesSkript is not null);
         ParameterLeerenBefehl = new AktionsBefehl(_ => ParameterLeeren(), _ => HatParameter);
 
         KatalogLaden();
@@ -72,6 +73,8 @@ public sealed class HauptViewModel : ViewModelBasis
     public AktionsBefehl AufrufKopierenBefehl { get; }
 
     public AktionsBefehl ParameterLeerenBefehl { get; }
+
+    public AktionsBefehl InPowerShellOeffnenBefehl { get; }
 
     public ScriptKategorie? AusgewaehlteKategorie
     {
@@ -414,6 +417,94 @@ public sealed class HauptViewModel : ViewModelBasis
             Statusmeldung = $"Speichern fehlgeschlagen: {ex.Message}";
         }
     }
+
+    /// <summary>
+    /// Oeffnet eine PowerShell-Sitzung im Skriptverzeichnis und legt den vorbereiteten
+    /// Aufruf bereit - ausgefuehrt wird nichts.
+    /// </summary>
+    /// <remarks>
+    /// Der bewusste Verzicht auf eine eingebaute Ausfuehrung bleibt bestehen: AdminWerk
+    /// startet nur die Sitzung. Was darin passiert, entscheidet der Mensch davor, nachdem
+    /// er den Quelltext gelesen hat. Gebraucht ein Skript erhoehte Rechte, wird die
+    /// Sitzung ueber die Benutzerkontensteuerung angefordert - sonst scheitert der Aufruf
+    /// erst spaeter und unverstaendlich.
+    /// </remarks>
+    private void InPowerShellOeffnen()
+    {
+        if (AusgewaehltesSkript is not { } skript)
+        {
+            return;
+        }
+
+        var pfad = _katalogDienst.SkriptPfad(skript);
+        if (!File.Exists(pfad))
+        {
+            Statusmeldung = $"Skriptdatei nicht gefunden: {pfad}";
+            return;
+        }
+
+        var verzeichnis = Path.GetDirectoryName(pfad) ?? _katalogDienst.SkriptVerzeichnis;
+        var aufruf = Aufrufzeile.Length > 0
+            ? Aufrufzeile
+            : ".\\" + Path.GetFileName(pfad);
+
+        var befehl = string.Join("; ",
+            $"Set-Location -LiteralPath {PsZeichenkette(verzeichnis)}",
+            $"Write-Host ''",
+            $"Write-Host {PsZeichenkette("AdminWerk – " + skript.Titel)} -ForegroundColor Cyan",
+            $"Write-Host {PsZeichenkette(skript.Datei)} -ForegroundColor DarkGray",
+            $"Write-Host ''",
+            $"Write-Host {PsZeichenkette("Vorbereiteter Aufruf (liegt auch in der Zwischenablage):")} -ForegroundColor DarkGray",
+            $"Write-Host {PsZeichenkette("  " + aufruf)} -ForegroundColor Yellow",
+            $"Write-Host ''",
+            $"Write-Host {PsZeichenkette("Es wurde nichts ausgeführt. Bitte den Quelltext vorher lesen.")} -ForegroundColor DarkGray",
+            $"Write-Host ''");
+
+        try
+        {
+            Clipboard.SetText(aufruf);
+        }
+        catch (Exception)
+        {
+            // Die Zwischenablage ist nur eine Bequemlichkeit - die Sitzung startet trotzdem.
+        }
+
+        var start = new ProcessStartInfo("powershell.exe")
+        {
+            UseShellExecute = true,
+            WorkingDirectory = verzeichnis
+        };
+
+        start.ArgumentList.Add("-NoExit");
+        start.ArgumentList.Add("-NoProfile");
+        start.ArgumentList.Add("-Command");
+        start.ArgumentList.Add(befehl);
+
+        if (skript.AdminRechte)
+        {
+            start.Verb = "runas";
+        }
+
+        try
+        {
+            Process.Start(start);
+            Statusmeldung = skript.AdminRechte
+                ? "PowerShell als Administrator geöffnet – das Skript wurde nicht ausgeführt."
+                : "PowerShell geöffnet – das Skript wurde nicht ausgeführt.";
+        }
+        catch (System.ComponentModel.Win32Exception ex) when (ex.NativeErrorCode == 1223)
+        {
+            // 1223 = der Benutzer hat die Rechteanforderung abgelehnt
+            Statusmeldung = "Die Anforderung erhöhter Rechte wurde abgebrochen.";
+        }
+        catch (Exception ex)
+        {
+            Statusmeldung = $"PowerShell konnte nicht geöffnet werden: {ex.Message}";
+        }
+    }
+
+    /// <summary>Verpackt einen Wert als einfach zitierte PowerShell-Zeichenkette.</summary>
+    private static string PsZeichenkette(string wert) => "'" + wert.Replace("'", "''") + "'";
 
     private void SkriptordnerOeffnen()
     {

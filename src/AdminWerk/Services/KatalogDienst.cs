@@ -22,6 +22,10 @@ public sealed class KatalogDienst
     public KatalogDienst(string? skriptVerzeichnis = null)
         => SkriptVerzeichnis = skriptVerzeichnis ?? Path.Combine(AppContext.BaseDirectory, "Scripts");
 
+    /// <summary>Vollstaendiger Pfad der .ps1-Datei eines Katalogeintrags.</summary>
+    public string SkriptPfad(ScriptEintrag skript)
+        => Path.Combine(SkriptVerzeichnis, skript.Datei.Replace('/', Path.DirectorySeparatorChar));
+
     /// <summary>
     /// Liest den Katalog ein. Fehlt eine .ps1-Datei, bleibt der Eintrag erhalten und traegt
     /// stattdessen einen Hinweistext – die Anwendung soll wegen eines Skripts nicht scheitern.
@@ -55,7 +59,7 @@ public sealed class KatalogDienst
             return "# Für diesen Eintrag ist keine Skriptdatei hinterlegt.";
         }
 
-        var pfad = Path.Combine(SkriptVerzeichnis, skript.Datei.Replace('/', Path.DirectorySeparatorChar));
+        var pfad = SkriptPfad(skript);
         return File.Exists(pfad)
             ? File.ReadAllText(pfad)
             : $"# Skriptdatei nicht gefunden: {pfad}";
