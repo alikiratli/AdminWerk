@@ -141,6 +141,197 @@
 
     <!-- ===================== Kategorie-Navigation ===================== -->
 
+    <!-- ===================== Parameterassistent ===================== -->
+
+    <!-- Schmaleres Geschwister des Suchfelds, fuer die Eingabezeilen im Assistenten. -->
+    <Style x:Key="Eingabefeld" TargetType="TextBox" BasedOn="{StaticResource Suchfeld}">
+        <Setter Property="Padding" Value="9,6" />
+        <Setter Property="FontSize" Value="12.5" />
+    </Style>
+
+    <Style x:Key="Auswahlfeld" TargetType="ComboBox">
+        <Setter Property="FontFamily" Value="{StaticResource Schrift.Oberflaeche}" />
+        <Setter Property="FontSize" Value="12.5" />
+        <Setter Property="Foreground" Value="{StaticResource Text.Primaer}" />
+        <Setter Property="Background" Value="{StaticResource Flaeche.Fenster}" />
+        <Setter Property="BorderBrush" Value="{StaticResource Linie.Standard}" />
+        <Setter Property="Padding" Value="9,6" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="ItemContainerStyle">
+            <Setter.Value>
+                <Style TargetType="ComboBoxItem">
+                    <Setter Property="Padding" Value="9,6" />
+                    <Setter Property="Foreground" Value="{StaticResource Text.Primaer}" />
+                    <Setter Property="Background" Value="Transparent" />
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="ComboBoxItem">
+                                <Border x:Name="Rahmen"
+                                        Background="{TemplateBinding Background}"
+                                        Padding="{TemplateBinding Padding}">
+                                    <ContentPresenter />
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsHighlighted" Value="True">
+                                        <Setter TargetName="Rahmen" Property="Background" Value="{StaticResource Flaeche.Erhoben}" />
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ComboBox">
+                    <Grid>
+                        <Border x:Name="Rahmen"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="1"
+                                CornerRadius="6" />
+                        <ToggleButton Background="Transparent"
+                                      BorderThickness="0"
+                                      Focusable="False"
+                                      IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}">
+                            <ToggleButton.Template>
+                                <ControlTemplate TargetType="ToggleButton">
+                                    <Border Background="Transparent" />
+                                </ControlTemplate>
+                            </ToggleButton.Template>
+                        </ToggleButton>
+                        <ContentPresenter Margin="{TemplateBinding Padding}"
+                                          HorizontalAlignment="Left"
+                                          VerticalAlignment="Center"
+                                          IsHitTestVisible="False"
+                                          Content="{TemplateBinding SelectionBoxItem}" />
+                        <TextBlock Text="&#x25BE;"
+                                   Margin="0,0,10,0"
+                                   HorizontalAlignment="Right"
+                                   VerticalAlignment="Center"
+                                   IsHitTestVisible="False"
+                                   Foreground="{StaticResource Text.Gedaempft}" />
+                        <Popup AllowsTransparency="True"
+                               Placement="Bottom"
+                               Focusable="False"
+                               IsOpen="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}}"
+                               PopupAnimation="Slide">
+                            <Border Background="{StaticResource Flaeche.Karte}"
+                                    BorderBrush="{StaticResource Linie.Betont}"
+                                    BorderThickness="1"
+                                    CornerRadius="6"
+                                    MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}">
+                                <ItemsPresenter Margin="0,4" />
+                            </Border>
+                        </Popup>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                            <Setter TargetName="Rahmen" Property="BorderBrush" Value="{StaticResource Akzent.Primaer}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="Schalter" TargetType="CheckBox">
+        <Setter Property="FontFamily" Value="{StaticResource Schrift.Oberflaeche}" />
+        <Setter Property="FontSize" Value="12.5" />
+        <Setter Property="Foreground" Value="{StaticResource Text.Sekundaer}" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="CheckBox">
+                    <StackPanel Orientation="Horizontal" Background="Transparent">
+                        <Border x:Name="Kaestchen"
+                                Width="17" Height="17"
+                                CornerRadius="4"
+                                Background="{StaticResource Flaeche.Fenster}"
+                                BorderBrush="{StaticResource Linie.Betont}"
+                                BorderThickness="1"
+                                VerticalAlignment="Center">
+                            <TextBlock x:Name="Haken"
+                                       Text="&#x2713;"
+                                       FontSize="12"
+                                       FontWeight="Bold"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"
+                                       Visibility="Collapsed"
+                                       Foreground="#0E1217" />
+                        </Border>
+                        <ContentPresenter Margin="9,0,0,0" VerticalAlignment="Center" />
+                    </StackPanel>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="Kaestchen" Property="Background" Value="{StaticResource Akzent.Primaer}" />
+                            <Setter TargetName="Kaestchen" Property="BorderBrush" Value="{StaticResource Akzent.Primaer}" />
+                            <Setter TargetName="Haken" Property="Visibility" Value="Visible" />
+                            <Setter Property="Foreground" Value="{StaticResource Text.Primaer}" />
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Kaestchen" Property="BorderBrush" Value="{StaticResource Akzent.Hell}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="Parameterbereich" TargetType="Expander">
+        <Setter Property="Foreground" Value="{StaticResource Text.Primaer}" />
+        <Setter Property="FontFamily" Value="{StaticResource Schrift.Oberflaeche}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Expander">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <ToggleButton Grid.Row="0"
+                                      Cursor="Hand"
+                                      IsChecked="{Binding IsExpanded, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}">
+                            <ToggleButton.Template>
+                                <ControlTemplate TargetType="ToggleButton">
+                                    <Border Background="Transparent" Padding="0,0,0,10">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock x:Name="Pfeil"
+                                                       Text="&#x25B8;"
+                                                       FontSize="12"
+                                                       Margin="0,0,8,0"
+                                                       VerticalAlignment="Center"
+                                                       Foreground="{StaticResource Akzent.Primaer}" />
+                                            <ContentPresenter VerticalAlignment="Center" />
+                                        </StackPanel>
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <DataTrigger Binding="{Binding IsExpanded, RelativeSource={RelativeSource AncestorType=Expander}}" Value="True">
+                                            <Setter TargetName="Pfeil" Property="Text" Value="&#x25BE;" />
+                                        </DataTrigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </ToggleButton.Template>
+                            <TextBlock Text="{Binding Header, RelativeSource={RelativeSource TemplatedParent}}"
+                                       FontSize="13.5"
+                                       FontWeight="SemiBold"
+                                       Foreground="{StaticResource Text.Primaer}" />
+                        </ToggleButton>
+
+                        <ContentPresenter x:Name="Inhalt" Grid.Row="1" Visibility="Collapsed" />
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsExpanded" Value="True">
+                            <Setter TargetName="Inhalt" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <Style x:Key="Kategorieleiste" TargetType="ListBox">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderThickness" Value="0" />

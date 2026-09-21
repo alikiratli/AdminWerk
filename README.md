@@ -40,6 +40,7 @@ den Inhalt vorher gelesen hat.
 | **Favoriten** | Häufig gebrauchte Skripte mit dem Stern markieren (oder `Strg+D`) und über den eigenen Reiter „Favoriten“ wiederfinden |
 | **Volltextsuche** | Durchsucht Titel, Beschreibung, Schlagwörter **und** den Skriptinhalt |
 | **Syntaxhervorhebung** | PowerShell-Quelltext farblich aufbereitet (Kommentare, Cmdlets, Variablen, Parameter) |
+| **Parameter-Assistent** | Liest den `param()`-Block aus und baut daraus ein Formular — Textfeld, Auswahlliste oder Haken je nach Typ. Daraus entsteht die fertige Aufrufzeile |
 | **Zwischenablage** | Das vollständige Skript mit einem Klick kopieren |
 | **Als `.ps1` speichern** | Export mit UTF-8-BOM, damit Windows PowerShell 5.1 die Umlaute korrekt liest |
 | **Kennzeichnung** | Jedes Skript zeigt Kategorie, benötigte Rechte und Voraussetzungen |
@@ -179,6 +180,43 @@ Die Schaltfläche **Skriptordner** öffnet das Verzeichnis direkt im Explorer.
 
 ---
 
+## Parameter-Assistent
+
+42 der 51 Skripte haben Parameter — zusammen 126. Wer das Skript nur kopiert, muss den
+Aufruf von Hand zusammensetzen und dafür erst den `param()`-Block lesen. Der Assistent
+nimmt das ab: unter der Detailansicht steht **Parameter (n)**, aufgeklappt erscheint je
+Parameter eine Zeile.
+
+Die Art des Feldes richtet sich nach dem Typ:
+
+| Im Skript | In der Oberfläche |
+|---|---|
+| `[switch]$Anwenden` | Haken |
+| `[ValidateSet('Running','Stopped')]` | Auswahlliste |
+| `[string[]]$Computername` | Textfeld, mehrere Werte mit Komma |
+| `[int]$KennwortLaenge = 16` | Textfeld, Standardwert als Hinweis |
+| `[Parameter(Mandatory = $true)]` | Name mit `*`, Warnung solange leer |
+
+Als Erläuterung dient `.PARAMETER` aus dem Kommentarkopf, ersatzweise der Kommentar über
+dem Parameter. Leere Felder bleiben weg — dann gilt der Standardwert des Skripts.
+
+Unten steht die fertige Zeile, etwa:
+
+```powershell
+.\konten-aktivieren-deaktivieren.ps1 -Benutzername 'mmuster','jbeispiel' -Aktion 'Deaktivieren' -AusGruppenEntfernen
+```
+
+Zeichenketten stehen in einfachen Anführungszeichen (die schützen auch Pfade mit
+Backslash), Zahlen ohne, Schalter als bloßer Name. Ein Apostroph im Wert wird verdoppelt.
+
+Der `param()`-Block wird dafür selbst gelesen: der PowerShell-Parser lebt in
+`System.Management.Automation`, und das Projekt kommt bewusst ohne Fremdbibliotheken aus.
+`ParameterDienst` ist deshalb kein vollständiger PowerShell-Parser, sondern beherrscht den
+Stil, in dem der Katalog geschrieben ist. Geprüft wurde er gegen den echten Parser: bei
+allen 126 Parametern stimmen Name, Typ, Pflichtangabe und `ValidateSet` überein.
+
+---
+
 ## Prüfung
 
 Jeder Push und jeder Pull Request auf `main` läuft durch zwei Aufträge
@@ -193,11 +231,11 @@ Beides lässt sich vor dem Commit lokal ausführen:
 
 ```powershell
 # Syntax, Katalogabgleich und Pflichtangaben
-.	ools\katalog-pruefen.ps1
+.\tools\katalog-pruefen.ps1
 
 # Stilregeln
 Invoke-ScriptAnalyzer -Path .\src\AdminWerk\Scripts -Recurse `
-    -Settings .	ools\PSScriptAnalyzerSettings.psd1
+    -Settings .\tools\PSScriptAnalyzerSettings.psd1
 ```
 
 `katalog-pruefen.ps1` prüft in einem Durchlauf:
@@ -237,8 +275,9 @@ AdminWerk/
     ├── AdminWerk.csproj
     ├── App.xaml(.cs)           Anwendungseinstieg, deutsche Kultur
     ├── MainWindow.xaml(.cs)    Hauptfenster
-    ├── Models/                 ScriptEintrag, ScriptKategorie, ScriptKatalog
-    ├── Services/               KatalogDienst (catalog.json + .ps1), FavoritenDienst
+    ├── Models/                 ScriptEintrag, ScriptKategorie, ScriptKatalog, SkriptParameter
+    ├── Services/               KatalogDienst (catalog.json + .ps1), FavoritenDienst,
+    │                           ParameterDienst (param()-Block und Aufrufzeile)
     ├── ViewModels/             HauptViewModel, AktionsBefehl, ViewModelBasis
     ├── Views/                  PowerShellHervorhebung — Syntaxeinfärbung
     ├── Themes/                 Palette.xaml, Steuerelemente.xaml

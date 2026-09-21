@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Windows;
@@ -28,6 +29,7 @@ public sealed class HauptViewModel : ViewModelBasis
     private string _suchbegriff = string.Empty;
     private string _statusmeldung = string.Empty;
     private string? _ladefehler;
+    private string _aufrufzeile = string.Empty;
 
     public HauptViewModel() : this(new KatalogDienst(), new FavoritenDienst())
     {
@@ -45,6 +47,8 @@ public sealed class HauptViewModel : ViewModelBasis
             _ => !string.IsNullOrEmpty(Suchbegriff));
         NeuLadenBefehl = new AktionsBefehl(_ => KatalogLaden());
         FavoritUmschaltenBefehl = new AktionsBefehl(FavoritUmschalten, p => (p ?? AusgewaehltesSkript) is not null);
+        AufrufKopierenBefehl = new AktionsBefehl(_ => AufrufKopieren(), _ => HatParameter);
+        ParameterLeerenBefehl = new AktionsBefehl(_ => ParameterLeeren(), _ => HatParameter);
 
         KatalogLaden();
     }
@@ -64,6 +68,10 @@ public sealed class HauptViewModel : ViewModelBasis
     public AktionsBefehl NeuLadenBefehl { get; }
 
     public AktionsBefehl FavoritUmschaltenBefehl { get; }
+
+    public AktionsBefehl AufrufKopierenBefehl { get; }
+
+    public AktionsBefehl ParameterLeerenBefehl { get; }
 
     public ScriptKategorie? AusgewaehlteKategorie
     {
@@ -86,11 +94,42 @@ public sealed class HauptViewModel : ViewModelBasis
             {
                 BenachrichtigeAenderung(nameof(HatAuswahl));
                 Statusmeldung = string.Empty;
+                ParameterUebernehmen();
             }
         }
     }
 
     public bool HatAuswahl => AusgewaehltesSkript is not null;
+
+    /// <summary>Parameter des ausgewaehlten Skripts, mit den Eingaben des Benutzers.</summary>
+    public ObservableCollection<SkriptParameter> Parameter { get; } = [];
+
+    public bool HatParameter => Parameter.Count > 0;
+
+    public string ParameterUeberschrift => Parameter.Count == 1
+        ? "Parameter (1)"
+        : $"Parameter ({Parameter.Count})";
+
+    /// <summary>Der fertige Aufruf, wie er in die PowerShell gehoert.</summary>
+    public string Aufrufzeile => _aufrufzeile;
+
+    /// <summary>Namen der Pflichtparameter, die noch leer sind - sonst leer.</summary>
+    public string FehlendeAngaben
+    {
+        get
+        {
+            var offen = Parameter
+                .Where(p => p.IstPflicht && !p.IstSchalter && p.Wert.Trim().Length == 0)
+                .Select(p => p.Name)
+                .ToList();
+
+            return offen.Count == 0
+                ? string.Empty
+                : "Noch ohne Wert: " + string.Join(", ", offen);
+        }
+    }
+
+    public bool HatFehlendeAngaben => FehlendeAngaben.Length > 0;
 
     public string Suchbegriff
     {
@@ -263,6 +302,66 @@ public sealed class HauptViewModel : ViewModelBasis
         if (AusgewaehlteKategorie?.Id == FavoritenKategorieId)
         {
             FilterAnwenden();
+        }
+    }
+
+    /// <summary>Liest den param()-Block des ausgewaehlten Skripts und baut den Assistenten neu auf.</summary>
+    private void ParameterUebernehmen()
+    {
+        foreach (var alt in Parameter)
+        {
+            alt.PropertyChanged -= ParameterGeaendert;
+        }
+
+        Parameter.Clear();
+
+        if (AusgewaehltesSkript is { } skript)
+        {
+            foreach (var p in ParameterDienst.Auslesen(skript.Inhalt))
+            {
+                p.PropertyChanged += ParameterGeaendert;
+                Parameter.Add(p);
+            }
+        }
+
+        BenachrichtigeAenderung(nameof(HatParameter));
+        BenachrichtigeAenderung(nameof(ParameterUeberschrift));
+        AufrufzeileNeuBauen();
+    }
+
+    private void ParameterGeaendert(object? absender, PropertyChangedEventArgs e) => AufrufzeileNeuBauen();
+
+    private void AufrufzeileNeuBauen()
+    {
+        _aufrufzeile = AusgewaehltesSkript is { } skript
+            ? ParameterDienst.Aufrufzeile(skript.Datei, Parameter)
+            : string.Empty;
+
+        BenachrichtigeAenderung(nameof(Aufrufzeile));
+        BenachrichtigeAenderung(nameof(FehlendeAngaben));
+        BenachrichtigeAenderung(nameof(HatFehlendeAngaben));
+    }
+
+    private void ParameterLeeren()
+    {
+        foreach (var p in Parameter)
+        {
+            p.Zuruecksetzen();
+        }
+
+        Statusmeldung = "Eingaben zurückgesetzt.";
+    }
+
+    private void AufrufKopieren()
+    {
+        try
+        {
+            Clipboard.SetText(Aufrufzeile);
+            Statusmeldung = "Aufrufzeile in die Zwischenablage kopiert.";
+        }
+        catch (Exception ex)
+        {
+            Statusmeldung = $"Kopieren fehlgeschlagen: {ex.Message}";
         }
     }
 

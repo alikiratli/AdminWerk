@@ -208,6 +208,7 @@
                                            Converter={StaticResource BoolZuSichtbarkeit}}">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
 
@@ -271,11 +272,133 @@
                         </StackPanel>
                     </StackPanel>
 
+                    <!-- ============ Parameterassistent ============ -->
                     <Border Grid.Row="1"
+                            Background="{StaticResource Flaeche.Kopf}"
+                            BorderBrush="{StaticResource Linie.Standard}"
+                            BorderThickness="0,1,0,0"
+                            Padding="22,14,22,14"
+                            Visibility="{Binding DataContext.HatParameter,
+                                                 RelativeSource={RelativeSource AncestorType=Window},
+                                                 Converter={StaticResource BoolZuSichtbarkeit}}">
+                        <!-- Zugeklappt: der Quelltext ist der Hauptinhalt der Detailansicht und
+                             soll nicht schon beim Auswaehlen eines Skripts verdraengt werden.
+                             Die Kopfzeile nennt die Anzahl und laedt zum Aufklappen ein. -->
+                        <Expander Style="{StaticResource Parameterbereich}"
+                                  IsExpanded="False"
+                                  Header="{Binding DataContext.ParameterUeberschrift,
+                                                   RelativeSource={RelativeSource AncestorType=Window}}">
+                            <StackPanel>
+                                <!-- Eng begrenzt: bei sieben Parametern draengt die Liste sonst
+                                     den Quelltext vollstaendig aus dem Fenster. -->
+                                <ScrollViewer MaxHeight="150"
+                                              VerticalScrollBarVisibility="Auto"
+                                              HorizontalScrollBarVisibility="Disabled">
+                                    <ItemsControl ItemsSource="{Binding DataContext.Parameter,
+                                                                       RelativeSource={RelativeSource AncestorType=Window}}"
+                                                  Margin="0,0,8,0">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Grid Margin="0,0,0,11">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="190" />
+                                                        <ColumnDefinition Width="*" />
+                                                    </Grid.ColumnDefinitions>
+
+                                                    <StackPanel Grid.Column="0" Margin="0,0,14,0">
+                                                        <TextBlock Text="{Binding Anzeigename}"
+                                                                   FontSize="12.5"
+                                                                   FontWeight="SemiBold"
+                                                                   TextWrapping="Wrap"
+                                                                   Foreground="{StaticResource Text.Primaer}" />
+                                                        <TextBlock Text="{Binding Hinweis}"
+                                                                   FontSize="11"
+                                                                   Margin="0,3,0,0"
+                                                                   TextWrapping="Wrap"
+                                                                   Foreground="{StaticResource Text.Gedaempft}" />
+                                                    </StackPanel>
+
+                                                    <StackPanel Grid.Column="1">
+                                                        <!-- Ueber dem Feld, nicht darunter: sonst liest sich der
+                                                             Text wie die Erlaeuterung des naechsten Parameters. -->
+                                                        <TextBlock Text="{Binding Beschreibung}"
+                                                                   FontSize="11.5"
+                                                                   Margin="0,0,0,5"
+                                                                   TextWrapping="Wrap"
+                                                                   Foreground="{StaticResource Text.Sekundaer}"
+                                                                   Visibility="{Binding HatBeschreibung, Converter={StaticResource BoolZuSichtbarkeit}}" />
+
+                                                        <CheckBox Style="{StaticResource Schalter}"
+                                                                  Content="{Binding Name, StringFormat=-{0} setzen}"
+                                                                  IsChecked="{Binding Gesetzt}"
+                                                                  AutomationProperties.Name="{Binding Name}"
+                                                                  Margin="0,3,0,0"
+                                                                  Visibility="{Binding IstSchalter, Converter={StaticResource BoolZuSichtbarkeit}}" />
+
+                                                        <ComboBox Style="{StaticResource Auswahlfeld}"
+                                                                  ItemsSource="{Binding ErlaubteWerte}"
+                                                                  SelectedItem="{Binding Wert}"
+                                                                  AutomationProperties.Name="{Binding Name}"
+                                                                  Visibility="{Binding HatAuswahl, Converter={StaticResource BoolZuSichtbarkeit}}" />
+
+                                                        <TextBox Style="{StaticResource Eingabefeld}"
+                                                                 Text="{Binding Wert, UpdateSourceTrigger=PropertyChanged, Delay=120}"
+                                                                 AutomationProperties.Name="{Binding Name}"
+                                                                 Visibility="{Binding HatTextfeld, Converter={StaticResource BoolZuSichtbarkeit}}" />
+                                                    </StackPanel>
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </ScrollViewer>
+
+                                <!-- Ergebnis: die Zeile, die in die PowerShell gehoert -->
+                                <TextBlock Text="Aufrufzeile"
+                                           FontSize="11"
+                                           Margin="0,8,0,5"
+                                           Foreground="{StaticResource Text.Gedaempft}" />
+                                <TextBox Text="{Binding DataContext.Aufrufzeile,
+                                                        RelativeSource={RelativeSource AncestorType=Window},
+                                                        Mode=OneWay}"
+                                         Style="{StaticResource Eingabefeld}"
+                                         AutomationProperties.Name="Erzeugte Aufrufzeile"
+                                         IsReadOnly="True"
+                                         TextWrapping="Wrap"
+                                         Background="{StaticResource Flaeche.Code}"
+                                         FontFamily="{StaticResource Schrift.Code}"
+                                         Foreground="{StaticResource Syntax.Parameter}" />
+
+                                <TextBlock Text="{Binding DataContext.FehlendeAngaben,
+                                                          RelativeSource={RelativeSource AncestorType=Window}}"
+                                           FontSize="11.5"
+                                           Margin="0,6,0,0"
+                                           TextWrapping="Wrap"
+                                           Foreground="{StaticResource Akzent.Warnung}"
+                                           Visibility="{Binding DataContext.HatFehlendeAngaben,
+                                                                RelativeSource={RelativeSource AncestorType=Window},
+                                                                Converter={StaticResource BoolZuSichtbarkeit}}" />
+
+                                <StackPanel Orientation="Horizontal" Margin="0,11,0,0">
+                                    <Button Content="Aufrufzeile kopieren"
+                                            Style="{StaticResource Schaltflaeche.Primaer}"
+                                            Command="{Binding DataContext.AufrufKopierenBefehl,
+                                                              RelativeSource={RelativeSource AncestorType=Window}}"
+                                            Margin="0,0,8,0" />
+                                    <Button Content="Eingaben leeren"
+                                            Style="{StaticResource Schaltflaeche.Sekundaer}"
+                                            Command="{Binding DataContext.ParameterLeerenBefehl,
+                                                              RelativeSource={RelativeSource AncestorType=Window}}" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Expander>
+                    </Border>
+
+                    <Border Grid.Row="2"
                             Background="{StaticResource Flaeche.Code}"
                             BorderBrush="{StaticResource Linie.Standard}"
                             BorderThickness="0,1,0,0"
-                            CornerRadius="0,0,8,8">
+                            CornerRadius="0,0,8,8"
+                            MinHeight="90">
                         <RichTextBox views:PowerShellHervorhebung.Quelltext="{Binding Inhalt}"
                                      IsReadOnly="True"
                                      IsDocumentEnabled="False"
