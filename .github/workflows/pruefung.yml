@@ -5,7 +5,7 @@ name: Pruefung
 
 on:
   push:
-    branches: [main]
+    branches: [main, oberflaechentest-ci]
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -73,3 +73,75 @@ jobs:
           }
           Write-Host ("{0} Befund(e)." -f $befunde.Count)
           exit 1
+
+  # Versuch: laeuft die UI-Automation auf einem GitHub-Runner? Der Auftrag darf
+  # scheitern, ohne den Rest rot zu faerben - er soll erst einmal nur Auskunft geben.
+  oberflaeche:
+    name: Oberflaechentests (Versuch)
+    runs-on: windows-latest
+    timeout-minutes: 20
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Bauen
+        run: dotnet build AdminWerk.sln --configuration Debug
+
+      - name: Sitzung beschreiben
+        shell: powershell
+        run: |
+          $ich = [System.Diagnostics.Process]::GetCurrentProcess()
+          Write-Host ("UserInteractive : {0}" -f [Environment]::UserInteractive)
+          Write-Host ("SessionId       : {0}" -f $ich.SessionId)
+          Write-Host ("Benutzer        : {0}" -f [Environment]::UserName)
+          Write-Host ("Fenstertitel    : '{0}'" -f $Host.UI.RawUI.WindowTitle)
+          Add-Type -AssemblyName System.Windows.Forms
+          Write-Host ("Bildschirme     : {0}" -f [System.Windows.Forms.Screen]::AllScreens.Count)
+          Write-Host ("Aufloesung      : {0}" -f [System.Windows.Forms.SystemInformation]::PrimaryMonitorSize)
+
+      - name: Oeffnet die Anwendung ueberhaupt ein Fenster?
+        shell: powershell
+        run: |
+          $exe = '.\src\AdminWerk\bin\Debug\net8.0-windows\AdminWerk.exe'
+          $p = Start-Process -FilePath $exe -PassThru
+          Start-Sleep -Seconds 8
+          $p = Get-Process -Id $p.Id -ErrorAction SilentlyContinue
+
+          if (-not $p) {
+              Write-Host 'Der Prozess hat sich sofort beendet.'
+              exit 1
+          }
+
+          Write-Host ("Prozess laeuft      : {0}" -f (-not $p.HasExited))
+          Write-Host ("MainWindowHandle    : {0}" -f $p.MainWindowHandle)
+          Write-Host ("Fenstertitel        : '{0}'" -f $p.MainWindowTitle)
+
+          if ($p.MainWindowHandle -eq 0) {
+              Write-Host 'Kein Fenster - UI-Automation ist hier nicht moeglich.'
+              Stop-Process -Id $p.Id -Force
+              exit 1
+          }
+
+          Add-Type -AssemblyName UIAutomationClient, UIAutomationTypes
+          $wurzel = [System.Windows.Automation.AutomationElement]::FromHandle($p.MainWindowHandle)
+          $bedingung = New-Object System.Windows.Automation.PropertyCondition(
+              [System.Windows.Automation.AutomationElement]::ControlTypeProperty,
+              [System.Windows.Automation.ControlType]::ListItem)
+          $eintraege = @($wurzel.FindAll([System.Windows.Automation.TreeScope]::Descendants, $bedingung))
+          Write-Host ("Elemente im Baum    : {0}" -f $eintraege.Count)
+          Write-Host ("Erste Namen         : {0}" -f (($eintraege | Select-Object -First 6 |
+              ForEach-Object { $_.Current.Name }) -join ' | '))
+
+          Stop-Process -Id $p.Id -Force
+
+      - name: Oberflaechentest
+        shell: powershell
+        run: .\tools\oberflaechentest.ps1
+
+      - name: Alle Skripte durchgehen
+        shell: powershell
+        run: .\tools\alle-skripte-durchgehen.ps1
