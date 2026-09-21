@@ -33,7 +33,9 @@ foreach ($computer in $Computername) {
     }
 
     $bericht = foreach ($mitglied in $mitglieder) {
-        $kontoname = ($mitglied.Name -split '\')[-1]
+        # Im Muster muss der Backslash verdoppelt werden: einzeln leitet er eine
+        # Escapefolge ein und ist am Musterende ungueltig.
+        $kontoname = ($mitglied.Name -split '\\')[-1]
         $lokal = if ($mitglied.PrincipalSource -eq 'Local') {
             Get-LocalUser -Name $kontoname -ErrorAction SilentlyContinue
         }

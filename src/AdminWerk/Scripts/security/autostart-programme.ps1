@@ -52,13 +52,13 @@ $bericht = foreach ($eintrag in $eintraege) {
     $pfad = if ($befehl -match '^"([^"]+)"') { $matches[1] } else { ($befehl -split ' ')[0] }
 
     $verdaechtig = $pfad -and
-                   $pfad -notmatch '^[A-Za-z]:\(Program Files|Program Files \(x86\)|Windows)\' -and
-                   $pfad -notmatch '^[A-Za-z]:\Users\[^\]+\AppData\Local\(Microsoft|Programs)\'
+                   $pfad -notmatch '^[A-Za-z]:\\(Program Files|Program Files \(x86\)|Windows)\\' -and
+                   $pfad -notmatch '^[A-Za-z]:\\Users\\[^\\]+\\AppData\\Local\\(Microsoft|Programs)\\'
 
     [PSCustomObject]@{
         Name       = $eintrag.Name
         Programm   = $pfad
-        Quelle     = ($eintrag.Quelle -replace '^HKLM:\SOFTWARE\', 'HKLM\') -replace '^HKCU:\SOFTWARE\', 'HKCU\'
+        Quelle     = ($eintrag.Quelle -replace '^HKLM:\\SOFTWARE\\', 'HKLM\') -replace '^HKCU:\\SOFTWARE\\', 'HKCU\'
         Vorhanden  = if ($pfad) { Test-Path -Path $pfad -ErrorAction SilentlyContinue } else { $false }
         Bewertung  = if ($verdaechtig) { 'PRUEFEN' } else { 'OK' }
     }

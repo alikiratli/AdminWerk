@@ -26,7 +26,7 @@ $bericht = foreach ($dienst in $dienste) {
                 else { ($pfadAngabe -split ' ')[0] }
 
     $ungequotet = ($pfadAngabe -notmatch '^"') -and ($pfadAngabe -match '\s') -and ($programm -match '\s')
-    $ausserhalb = $programm -notmatch '^[A-Za-z]:\(Windows|Program Files|Program Files \(x86\))\'
+    $ausserhalb = $programm -notmatch '^[A-Za-z]:\\(Windows|Program Files|Program Files \(x86\))\\'
 
     $signatur = 'nicht geprueft'
     if (Test-Path -Path $programm -ErrorAction SilentlyContinue) {
