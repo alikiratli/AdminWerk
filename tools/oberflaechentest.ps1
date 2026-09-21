@@ -82,7 +82,8 @@ function Pruefe {
 # --- Favoriten sichern ------------------------------------------------------
 $favoritenDatei = Join-Path $env:AppData 'AdminWerk\favoriten.json'
 $favoritenSicherung = $null
-if (Test-Path -Path $favoritenDatei) {
+$favoritenGabEs = Test-Path -Path $favoritenDatei
+if ($favoritenGabEs) {
     $favoritenSicherung = Get-Content -Path $favoritenDatei -Raw -Encoding UTF8
 }
 
@@ -188,7 +189,10 @@ Pruefe 'Beide Listen sind benannt' { (AlleVomTyp $Liste).Count -eq 2 }
 Pruefe 'Suchfeld ist benannt' { $null -ne (Suche 'Skripte durchsuchen' $Edit) }
 
 foreach ($k in $kategorien) {
-    Pruefe "Kategorie '$k' erreichbar" { $null -ne (Suche $k $Eintrag) }.GetNewClosure()
+    # Erst suchen, dann pruefen: eine Closure sieht die Funktionen dieses Skripts
+    # nicht zuverlaessig, sondern nur die Variablen.
+    $vorhanden = $null -ne (Suche $k $Eintrag)
+    Pruefe "Kategorie '$k' erreichbar" { $vorhanden }.GetNewClosure()
 }
 
 # ============================================================================
@@ -381,8 +385,12 @@ Pruefe 'Kein Absturz waehrend des Tests' { -not $proz.HasExited }
 Pruefe 'Das Fenster reagiert weiterhin' { $proz.Responding }
 
 # --- Aufraeumen -------------------------------------------------------------
-if ($null -ne $favoritenSicherung) {
+if ($favoritenGabEs) {
     Set-Content -Path $favoritenDatei -Value $favoritenSicherung -Encoding UTF8 -NoNewline
+}
+elseif (Test-Path -Path $favoritenDatei) {
+    # Vorher gab es keine Favoritendatei - dann soll der Test auch keine hinterlassen.
+    Remove-Item -Path $favoritenDatei -Force
 }
 
 if (-not $Offenlassen) {
