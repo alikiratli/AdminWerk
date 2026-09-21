@@ -56,6 +56,7 @@
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                     <Grid Width="300" Margin="0,0,10,0">
                         <TextBox Style="{StaticResource Suchfeld}"
+                                 AutomationProperties.Name="Skripte durchsuchen"
                                  Text="{Binding Suchbegriff, UpdateSourceTrigger=PropertyChanged, Delay=120}" />
                         <TextBlock Text="Skripte durchsuchen …"
                                    Margin="12,0,0,0"
@@ -95,6 +96,7 @@
                 BorderThickness="0,0,0,1"
                 Padding="22,0,22,0">
             <ListBox Style="{StaticResource Kategorieleiste}"
+                     AutomationProperties.Name="Kategorien"
                      ItemsSource="{Binding Kategorien}"
                      SelectedItem="{Binding AusgewaehlteKategorie}" />
         </Border>
@@ -144,6 +146,7 @@
                            Visibility="{Binding KeineTreffer, Converter={StaticResource BoolZuSichtbarkeit}}" />
 
                 <ListBox Style="{StaticResource Skriptliste}"
+                         AutomationProperties.Name="Skripte der gewaehlten Kategorie"
                          ItemsSource="{Binding GefilterteSkripte}"
                          SelectedItem="{Binding AusgewaehltesSkript}">
                     <ListBox.ItemTemplate>

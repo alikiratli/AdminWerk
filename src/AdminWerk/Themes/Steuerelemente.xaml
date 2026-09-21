@@ -63,6 +63,9 @@
         <Setter Property="Padding" Value="8,0,2,0" />
         <Setter Property="VerticalAlignment" Value="Top" />
         <Setter Property="ToolTip" Value="Als Favorit merken (Strg+D)" />
+        <!-- Titel mitfuehren: in einer Liste mit 13 Sternen waere "Als Favorit merken"
+             allein nicht unterscheidbar. -->
+        <Setter Property="AutomationProperties.Name" Value="{Binding Titel, StringFormat='Als Favorit merken: {0}'}" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
@@ -83,6 +86,7 @@
                 <Setter Property="Content" Value="★" />
                 <Setter Property="Foreground" Value="{StaticResource Akzent.Warnung}" />
                 <Setter Property="ToolTip" Value="Favorit entfernen (Strg+D)" />
+                <Setter Property="AutomationProperties.Name" Value="{Binding Titel, StringFormat='Favorit entfernen: {0}'}" />
             </DataTrigger>
         </Style.Triggers>
     </Style>
@@ -154,6 +158,11 @@
                 <Style TargetType="ListBoxItem">
                     <Setter Property="Margin" Value="0,0,6,0" />
                     <Setter Property="Cursor" Value="Hand" />
+                    <!-- Ohne dies meldet die UI-Automation den Typnamen des Modells
+                         statt der Beschriftung - Sprachausgabe und Oberflaechentests
+                         haetten sonst nichts Lesbares. -->
+                    <Setter Property="AutomationProperties.Name" Value="{Binding Name}" />
+                    <Setter Property="AutomationProperties.HelpText" Value="{Binding Beschreibung}" />
                     <Setter Property="Template">
                         <Setter.Value>
                             <ControlTemplate TargetType="ListBoxItem">
@@ -215,6 +224,8 @@
                     <Setter Property="Margin" Value="0,0,0,6" />
                     <Setter Property="Cursor" Value="Hand" />
                     <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                    <Setter Property="AutomationProperties.Name" Value="{Binding Titel}" />
+                    <Setter Property="AutomationProperties.HelpText" Value="{Binding Beschreibung}" />
                     <Setter Property="Template">
                         <Setter.Value>
                             <ControlTemplate TargetType="ListBoxItem">
