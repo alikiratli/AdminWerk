@@ -1,0 +1,69 @@
+# Prueft bei jedem Push und jedem Pull Request, was das README zusichert:
+# die Anwendung baut, der Skriptkatalog ist konsistent und die Skripte sind
+# unter Windows PowerShell 5.1 lauffaehig.
+name: Pruefung
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  anwendung:
+    name: Anwendung bauen
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Wiederherstellen
+        run: dotnet restore AdminWerk.sln
+
+      - name: Bauen
+        # Warnungen gelten als Fehler: der Stand ist warnungsfrei, das soll so bleiben.
+        run: dotnet build AdminWerk.sln --configuration Release --no-restore -warnaserror
+
+  skriptkatalog:
+    name: Skriptkatalog pruefen
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Katalog, Syntax und 5.1-Tauglichkeit
+        # Bewusst Windows PowerShell 5.1 (nicht pwsh): nur dieser Parser ist der
+        # Massstab, auf den der Katalog zielt.
+        shell: powershell
+        run: .\tools\katalog-pruefen.ps1
+
+      - name: PSScriptAnalyzer einrichten
+        shell: powershell
+        run: |
+          Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
+          Install-Module PSScriptAnalyzer -Scope CurrentUser -Force -AllowClobber
+
+      - name: PSScriptAnalyzer
+        shell: powershell
+        run: |
+          Import-Module PSScriptAnalyzer
+          $befunde = Invoke-ScriptAnalyzer -Path .\src\AdminWerk\Scripts -Recurse `
+              -Settings .\tools\PSScriptAnalyzerSettings.psd1
+
+          if (-not $befunde) {
+              Write-Host 'Keine Befunde.' -ForegroundColor Green
+              exit 0
+          }
+
+          foreach ($b in $befunde) {
+              $datei = Resolve-Path -Relative $b.ScriptPath
+              # Im Annotationsformat von GitHub, damit die Stelle im Diff markiert wird.
+              $art = if ($b.Severity -eq 'Error') { 'error' } else { 'warning' }
+              Write-Host ("::{0} file={1},line={2}::{3}: {4}" -f `
+                  $art, $datei, $b.Line, $b.RuleName, $b.Message)
+          }
+          Write-Host ("{0} Befund(e)." -f $befunde.Count)
+          exit 1

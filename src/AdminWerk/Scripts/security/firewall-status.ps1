@@ -11,11 +11,11 @@
 [CmdletBinding()]
 param()
 
-$profile = Get-NetFirewallProfile
+$firewallProfile = Get-NetFirewallProfile
 
 Write-Host "`n=== Firewall-Profile: $env:COMPUTERNAME ===`n" -ForegroundColor Cyan
 
-$bericht = foreach ($profil in $profile) {
+$bericht = foreach ($profil in $firewallProfile) {
     [PSCustomObject]@{
         Profil             = $profil.Name
         Aktiv              = $profil.Enabled

@@ -5,6 +5,12 @@
   </picture>
 </p>
 
+<p align="center">
+  <a href="https://github.com/alikiratli/AdminWerk/actions/workflows/pruefung.yml">
+    <img alt="Pruefung" src="https://github.com/alikiratli/AdminWerk/actions/workflows/pruefung.yml/badge.svg">
+  </a>
+</p>
+
 Eine WPF-Anwendung, die geprüfte PowerShell-Skripte für die tägliche Windows-Administration
 bereitstellt. Kategorisiert, durchsuchbar, mit Syntaxhervorhebung — und mit einem Klick in der
 Zwischenablage oder als `.ps1`-Datei gespeichert.
@@ -173,6 +179,45 @@ Die Schaltfläche **Skriptordner** öffnet das Verzeichnis direkt im Explorer.
 
 ---
 
+## Prüfung
+
+Jeder Push und jeder Pull Request auf `main` läuft durch zwei Aufträge
+(`.github/workflows/pruefung.yml`):
+
+| Auftrag | Was geprüft wird |
+|---|---|
+| **Anwendung bauen** | `dotnet build` in `Release`, Warnungen gelten als Fehler |
+| **Skriptkatalog prüfen** | Syntax, Katalogabgleich, Pflichtangaben, PSScriptAnalyzer |
+
+Beides lässt sich vor dem Commit lokal ausführen:
+
+```powershell
+# Syntax, Katalogabgleich und Pflichtangaben
+.	ools\katalog-pruefen.ps1
+
+# Stilregeln
+Invoke-ScriptAnalyzer -Path .\src\AdminWerk\Scripts -Recurse `
+    -Settings .	ools\PSScriptAnalyzerSettings.psd1
+```
+
+`katalog-pruefen.ps1` prüft in einem Durchlauf:
+
+1. **Syntax** — jede `.ps1` wird mit dem PowerShell-Parser eingelesen.
+2. **5.1-Tauglichkeit** — der Parser allein reicht dafür nicht. `(if … )` als Argument
+   übersteht ihn anstandslos und scheitert erst zur Laufzeit mit *„if wurde nicht als Name
+   eines Cmdlet erkannt"*. Eine zusätzliche Prüfung über den Syntaxbaum sucht deshalb nach
+   Schlüsselwörtern, die als Befehl statt als Ausdruck stehen.
+3. **Abgleich** — jeder Katalogeintrag zeigt auf eine vorhandene Datei, und jede Datei ist
+   im Katalog verzeichnet.
+4. **Pflichtangaben** — Felder gefüllt, Bezeichner eindeutig, Kategorie bekannt,
+   `.SYNOPSIS` vorhanden.
+
+Der CI-Schritt läuft bewusst unter **Windows PowerShell 5.1**, nicht unter `pwsh` — nur
+dieser Parser ist der Maßstab, auf den der Katalog zielt. Die Ausnahmen für
+PSScriptAnalyzer stehen mit Begründung in `tools/PSScriptAnalyzerSettings.psd1`.
+
+---
+
 ## Projektaufbau
 
 ```
@@ -182,8 +227,12 @@ AdminWerk/
 ├── docs/
 │   ├── FORTSCHRITT.md          Entwicklungstagebuch
 │   └── bilder/                 Bildmarke und Bildschirmfotos
+├── .github/workflows/
+│   └── pruefung.yml            CI: Build und Katalogprüfung
 ├── tools/
-│   └── logo-erzeugen.py        erzeugt Bildmarke, Wortmarke und .ico
+│   ├── logo-erzeugen.py        erzeugt Bildmarke, Wortmarke und .ico
+│   ├── katalog-pruefen.ps1     Syntax, Abgleich, Pflichtangaben
+│   └── PSScriptAnalyzerSettings.psd1
 └── src/AdminWerk/
     ├── AdminWerk.csproj
     ├── App.xaml(.cs)           Anwendungseinstieg, deutsche Kultur

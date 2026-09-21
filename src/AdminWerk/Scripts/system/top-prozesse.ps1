@@ -34,7 +34,7 @@ $messung = foreach ($prozess in $ende) {
 
     # StartTime wirft bei Systemprozessen einen Zugriffsfehler - bewusst abfangen.
     $startzeit = $null
-    try { $startzeit = $prozess.StartTime } catch { }
+    try { $startzeit = $prozess.StartTime } catch { $startzeit = $null }
 
     [PSCustomObject]@{
         Prozess           = $prozess.ProcessName

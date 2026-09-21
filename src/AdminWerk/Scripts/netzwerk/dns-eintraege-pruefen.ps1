@@ -55,6 +55,7 @@ if ($Namen) {
             }
             catch {
                 # Kein Eintrag dieses Typs - das ist der Normalfall, nicht der Fehlerfall.
+                Write-Verbose ("{0}: kein {1}-Eintrag" -f $name, $typ)
             }
         }
     }

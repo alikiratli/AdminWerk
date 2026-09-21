@@ -72,6 +72,7 @@ $abfrage = {
     }
     catch {
         # Windows-Update-Schnittstelle nicht erreichbar - Felder bleiben leer.
+        Write-Verbose ("Windows Update auf {0} nicht abfragbar: {1}" -f $env:COMPUTERNAME, $_.Exception.Message)
     }
 
     $neustart = (Test-Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\Auto Update\RebootRequired') -or
@@ -123,8 +124,8 @@ $bericht = foreach ($computer in $Computername) {
     # Einstufung: Sicherheitsupdates wiegen am schwersten.
     $einstufung = 'KONFORM'
     if ($daten.Sicherheitsupdates -gt 0)                        { $einstufung = 'NICHT KONFORM' }
-    elseif ($alter -ne $null -and $alter -gt ($MaximalesUpdateAlterTage * 2)) { $einstufung = 'NICHT KONFORM' }
-    elseif ($alter -ne $null -and $alter -gt $MaximalesUpdateAlterTage)       { $einstufung = 'WARNUNG' }
+    elseif ($null -ne $alter -and $alter -gt ($MaximalesUpdateAlterTage * 2)) { $einstufung = 'NICHT KONFORM' }
+    elseif ($null -ne $alter -and $alter -gt $MaximalesUpdateAlterTage)       { $einstufung = 'WARNUNG' }
     elseif ($daten.Ausstehend -gt 0 -or $daten.NeustartNoetig)  { $einstufung = 'WARNUNG' }
 
     [PSCustomObject]@{

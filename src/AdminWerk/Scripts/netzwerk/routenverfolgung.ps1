@@ -31,13 +31,13 @@ $abschnitte = foreach ($hop in $route.TraceRoute) {
     $antwort = Test-Connection -ComputerName $hop -Count 1 -ErrorAction SilentlyContinue
     $latenz = if ($antwort) { $antwort.ResponseTime } else { $null }
 
-    $zuwachs = if ($latenz -ne $null -and $vorherigeLatenz -gt 0) { $latenz - $vorherigeLatenz } else { 0 }
-    if ($latenz -ne $null) { $vorherigeLatenz = $latenz }
+    $zuwachs = if ($null -ne $latenz -and $vorherigeLatenz -gt 0) { $latenz - $vorherigeLatenz } else { 0 }
+    if ($null -ne $latenz) { $vorherigeLatenz = $latenz }
 
     [PSCustomObject]@{
         Sprung    = $sprung
         Adresse   = $hop
-        LatenzMs  = if ($latenz -ne $null) { $latenz } else { 'keine Antwort' }
+        LatenzMs  = if ($null -ne $latenz) { $latenz } else { 'keine Antwort' }
         ZuwachsMs = $zuwachs
     }
 }

@@ -12,6 +12,7 @@
 param(
     [int]$MindestLaenge = 12,
     [int]$MaximalesAlterTage = 365,
+    [int]$MindestAlterTage = 1,
     [int]$SperrschwelleMax = 10
 )
 
@@ -56,6 +57,14 @@ $bewertung = @(
         Ist       = $maxAlter
         Empfohlen = "<= $MaximalesAlterTage"
         Bewertung = if ($maxAlter -is [int] -and $maxAlter -le $MaximalesAlterTage) { 'OK' } else { 'PRUEFEN' }
+    }
+    [PSCustomObject]@{
+        Kriterium = 'Minimales Kennwortalter (Tage)'
+        Ist       = $minAlter
+        Empfohlen = ">= $MindestAlterTage"
+        # Ohne Mindestalter laesst sich die Chronik aushebeln: einfach so oft wechseln,
+        # bis das alte Kennwort wieder frei ist.
+        Bewertung = if ($minAlter -is [int] -and $minAlter -ge $MindestAlterTage) { 'OK' } else { 'PRUEFEN' }
     }
     [PSCustomObject]@{
         Kriterium = 'Kennwortchronik'

@@ -126,7 +126,11 @@ try {
 
     Add-Pruefung -Bereich 'Konten' -Pruefung 'Aktive Konten ohne Anmeldung (>90 Tage)' -Bewertung $bewertung -Detail $detail
 }
-catch { }
+catch {
+    # Kein AD erreichbar oder keine Leseberechtigung - die Pruefung entfaellt still,
+    # damit das Gesamtaudit auf einem Einzelrechner weiterlaeuft.
+    Write-Verbose "Kontenpruefung uebersprungen: $($_.Exception.Message)"
+}
 
 # --- Remotedesktop -----------------------------------------------------------
 $rdpSchluessel = 'HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server'
@@ -173,7 +177,10 @@ try {
 
     Add-Pruefung -Bereich 'Protokolle' -Pruefung 'SMBv1' -Bewertung $bewertung -Detail $detail
 }
-catch { }
+catch {
+    # Get-SmbServerConfiguration fehlt auf aelteren Systemen ohne SMB-Serverrolle.
+    Write-Verbose "SMBv1-Pruefung uebersprungen: $($_.Exception.Message)"
+}
 
 # --- Autostart ---------------------------------------------------------------
 $autostart = @(Get-CimInstance Win32_StartupCommand -ErrorAction SilentlyContinue)
