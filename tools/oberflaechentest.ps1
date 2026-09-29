@@ -3,9 +3,10 @@
     Bedient die Anwendung ueber die UI-Automation und prueft die Oberflaeche.
 .DESCRIPTION
     Startet AdminWerk und klickt sich durch: Kategorien, Suche, Parameterassistent
-    (Textfeld, Zahl, Schalter, Auswahlliste), Zwischenablage, Favoriten und
-    "In PowerShell oeffnen". Jeder Schritt meldet OK oder FEHLER, am Ende steht eine
-    Bilanz. Rueckgabewert 0, wenn alles bestanden ist, sonst 1.
+    (Textfeld, Zahl, Schalter, Auswahlliste), Zwischenablage, Favoriten,
+    "In PowerShell oeffnen" und Pruefpakete (als ZIP speichern, wieder oeffnen).
+    Jeder Schritt meldet OK oder FEHLER, am Ende steht eine Bilanz.
+    Rueckgabewert 0, wenn alles bestanden ist, sonst 1.
 
     Die Favoritendatei des Benutzers wird vorher gesichert und hinterher
     wiederhergestellt - der Test darf keine Spuren hinterlassen.
@@ -378,7 +379,184 @@ if ($neu.Count -eq 1) {
 
 # ============================================================================
 Write-Host ''
-Write-Host '=== 10. Zustand der Anwendung ===' -ForegroundColor Cyan
+Write-Host '=== 10. Pruefpaket speichern und wieder oeffnen ===' -ForegroundColor Cyan
+
+# Die Dateidialoge sind echte Win32-Dialoge im Prozess der Anwendung. Der verwaltete
+# UIA-Client sieht ihre Felder nur als "Pane" ohne Wertmuster; deshalb eine Ebene
+# tiefer: das Edit-Fenster mit der bekannten Steuerelement-Id suchen (1001 beim
+# Speichern, 1148 beim Oeffnen), den Namen Zeichen fuer Zeichen als WM_CHAR, dann
+# WM_COMMAND IDOK. Das braucht keinen Fokus - auf dem Runner bekommt ihn ein
+# Hintergrundprozess ohnehin nicht. WM_SETTEXT genuegt nicht: der Speichern-Dialog
+# fuehrt den Dateinamen intern und uebernimmt nur, was als Eingabe ankommt.
+Add-Type -TypeDefinition @'
+using System;
+using System.Runtime.InteropServices;
+using System.Text;
+
+public static class DateiDialog
+{
+    private delegate bool Rueckruf(IntPtr fenster, IntPtr wert);
+
+    [DllImport("user32.dll")]
+    private static extern bool EnumChildWindows(IntPtr eltern, Rueckruf rueckruf, IntPtr wert);
+
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+    private static extern int GetClassName(IntPtr fenster, StringBuilder name, int laenge);
+
+    [DllImport("user32.dll")]
+    private static extern int GetDlgCtrlID(IntPtr fenster);
+
+    [DllImport("user32.dll")]
+    private static extern bool IsWindowVisible(IntPtr fenster);
+
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+    private static extern IntPtr SendMessage(IntPtr fenster, int nachricht, IntPtr w, IntPtr l);
+
+    [DllImport("user32.dll")]
+    private static extern bool PostMessage(IntPtr fenster, int nachricht, IntPtr w, IntPtr l);
+
+    public static bool Ausfuellen(IntPtr dialog, int feldId, string text)
+    {
+        var feld = IntPtr.Zero;
+        EnumChildWindows(dialog, (h, _) =>
+        {
+            var klasse = new StringBuilder(64);
+            GetClassName(h, klasse, klasse.Capacity);
+            if (klasse.ToString() == "Edit" && GetDlgCtrlID(h) == feldId && IsWindowVisible(h))
+            {
+                feld = h;
+                return false;
+            }
+            return true;
+        }, IntPtr.Zero);
+
+        if (feld == IntPtr.Zero)
+        {
+            return false;
+        }
+
+        SendMessage(feld, 0x00B1, IntPtr.Zero, (IntPtr)(-1)); // EM_SETSEL: alles markieren
+        SendMessage(feld, 0x0303, IntPtr.Zero, IntPtr.Zero);  // WM_CLEAR
+        foreach (var zeichen in text)
+        {
+            SendMessage(feld, 0x0102, (IntPtr)zeichen, IntPtr.Zero); // WM_CHAR
+        }
+
+        PostMessage(dialog, 0x0111, (IntPtr)1, IntPtr.Zero); // WM_COMMAND, IDOK
+        return true;
+    }
+}
+'@
+
+function Dialog {
+    param([string]$Titel)
+
+    for ($i = 0; $i -lt 20; $i++) {
+        $d = $fenster.FindFirst([System.Windows.Automation.TreeScope]::Children, (NameGleich $Titel))
+        if ($d) { return $d }
+        Start-Sleep -Milliseconds 300
+    }
+}
+
+function DialogAusfuellen {
+    param($Dialog, [int]$FeldId, [string]$Pfad)
+
+    $ok = [DateiDialog]::Ausfuellen([IntPtr]$Dialog.Current.NativeWindowHandle, $FeldId, $Pfad)
+    Start-Sleep -Seconds 1
+    $ok
+}
+
+$paketOrdner = Join-Path $env:TEMP ('AdminWerk-Oberflaechentest-' + [guid]::NewGuid().ToString('N').Substring(0, 8))
+New-Item -Path $paketOrdner -ItemType Directory | Out-Null
+$paketZip = Join-Path $paketOrdner 'Testpaket.zip'
+
+# Zwei Skripte ins Paket: eines mit sicherem Schalter und Listenparameter, eines ohne.
+Setze (Suche 'Skripte durchsuchen' $Edit) 'Dienste'
+Start-Sleep -Milliseconds 800
+foreach ($titel in 'Kritische Dienste überwachen und starten', 'Dienststatus*') {
+    $kasten = AlleVomTyp $Haken | Where-Object { $_.Current.Name -like "Ins Prüfpaket: $titel" } | Select-Object -First 1
+    if ($kasten) {
+        $kasten.GetCurrentPattern([System.Windows.Automation.TogglePattern]::Pattern).Toggle()
+        Start-Sleep -Milliseconds 400
+    }
+}
+Pruefe 'Zwei Skripte liegen im Paket' { $null -ne (Suche '2 Skripte im Paket' $Text) }
+
+Waehle (AlleVomTyp $Eintrag | Where-Object { $_.Current.Name -like 'Kritische Dienste*' } | Select-Object -First 1)
+KlappeAuf (Parameterkopf)
+Setze (Suche 'Dienste' $Edit) 'Spooler, BITS'
+
+Druecke (Suche 'Paket erzeugen' $Knopf)
+$speichern = Dialog 'Prüfpaket speichern'
+Pruefe 'Der Speichern-Dialog erscheint' { $null -ne $speichern }
+Pruefe 'Der Dateiname laesst sich eintragen' { $speichern -and (DialogAusfuellen $speichern 1001 $paketZip) }
+
+# Scheitert das Erzeugen, steht der Grund in der Statusleiste - dann als Befund.
+$meldung = AlleVomTyp $Text | Where-Object { $_.Current.Name -match 'Prüfpaket' } |
+    Select-Object -First 1 | ForEach-Object { $_.Current.Name }
+Pruefe 'Das Paket liegt als ZIP vor' { Test-Path -Path $paketZip } $meldung
+
+if (Test-Path -Path $paketZip) {
+    Add-Type -AssemblyName System.IO.Compression.FileSystem
+    $archiv = [System.IO.Compression.ZipFile]::OpenRead($paketZip)
+    try {
+        $namen = @($archiv.Entries | ForEach-Object { $_.FullName })
+        $jsonEintrag = $archiv.Entries | Where-Object { $_.FullName -eq 'Testpaket/paket.json' }
+        $json = if ($jsonEintrag) {
+            $leser = New-Object System.IO.StreamReader($jsonEintrag.Open(), [System.Text.Encoding]::UTF8)
+            try { $leser.ReadToEnd() | ConvertFrom-Json } finally { $leser.Dispose() }
+        }
+    }
+    finally {
+        $archiv.Dispose()
+    }
+
+    Pruefe 'Im Archiv liegt ein Ordner mit Laeufer und paket.json' {
+        $namen -contains 'Testpaket/Start-Pruefung.ps1' -and $null -ne $json
+    } ($namen -join ', ')
+
+    $ueberwachen = @($json.skripte | Where-Object { $_.id -eq 'sys-dienste-ueberwachen' })[0]
+    Pruefe 'Der Paketname kommt aus dem Dateinamen' { $json.name -eq 'Testpaket' } $json.name
+    Pruefe 'Die Eingabe aus dem Assistenten steht im Paket' {
+        ($ueberwachen.argumente.Dienste -join ',') -eq 'Spooler,BITS' -and $ueberwachen.argumente.NurPruefen -eq $true
+    } ($ueberwachen.argumente | ConvertTo-Json -Compress)
+}
+
+# Den Explorer, der das Archiv zeigt, wieder schliessen.
+Start-Sleep -Seconds 2
+$explorer = [System.Windows.Automation.AutomationElement]::RootElement.FindFirst(
+    [System.Windows.Automation.TreeScope]::Children, (NameGleich (Split-Path -Leaf $paketOrdner)))
+if ($explorer) {
+    $explorer.GetCurrentPattern([System.Windows.Automation.WindowPattern]::Pattern).Close()
+}
+
+# Alles zuruecksetzen, dann das Paket zurueckholen.
+Druecke (Suche 'Eingaben leeren' $Knopf)
+Druecke (Suche 'Auswahl leeren' $Knopf)
+Pruefe 'Die Auswahl ist leer' { $null -eq (Suche 'Paket erzeugen' $Knopf) }
+
+Druecke (Suche 'Paket öffnen' $Knopf)
+$oeffnen = Dialog 'Prüfpaket öffnen'
+Pruefe 'Der Oeffnen-Dialog erscheint' { $null -ne $oeffnen }
+Pruefe 'Das Paket laesst sich auswaehlen' { $oeffnen -and (DialogAusfuellen $oeffnen 1148 $paketZip) }
+
+Pruefe 'Das Paket kommt mit beiden Skripten zurueck' { $null -ne (Suche '2 Skripte im Paket' $Text) }
+
+Waehle (AlleVomTyp $Eintrag | Where-Object { $_.Current.Name -like 'Kritische Dienste*' } | Select-Object -First 1)
+KlappeAuf (Parameterkopf)
+$zeile3 = Suche 'Erzeugte Aufrufzeile' $Edit
+# Der sichere Schalter gehoert dem Paket, nicht dem Einzelaufruf - er darf hier nicht stehen.
+Pruefe 'Die Werte stehen wieder im Assistenten, ohne den sicheren Schalter' {
+    (Wert $zeile3) -eq ".\dienste-ueberwachen.ps1 -Dienste 'Spooler','BITS'"
+} (Wert $zeile3)
+
+Druecke (Suche 'Eingaben leeren' $Knopf)
+Druecke (Suche 'Auswahl leeren' $Knopf)
+Remove-Item -Path $paketOrdner -Recurse -Force -ErrorAction SilentlyContinue
+
+# ============================================================================
+Write-Host ''
+Write-Host '=== 11. Zustand der Anwendung ===' -ForegroundColor Cyan
 
 $proz.Refresh()
 Pruefe 'Kein Absturz waehrend des Tests' { -not $proz.HasExited }

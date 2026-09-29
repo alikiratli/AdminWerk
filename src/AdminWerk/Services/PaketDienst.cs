@@ -1,4 +1,5 @@
 using System.IO;
+using System.IO.Compression;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -11,8 +12,12 @@ namespace AdminWerk.Services;
 /// Beschreibung des Pakets und den Laeufer, der daraus einen HTML-Bericht macht.
 /// </summary>
 /// <remarks>
-/// Ausgefuehrt wird auch hier nichts. Das Paket ist ein Ordner, den man auf das
+/// Ausgefuehrt wird auch hier nichts. Das Paket ist ein ZIP-Archiv, das man auf das
 /// Zielsystem traegt; gestartet wird es dort von Hand.
+///
+/// Ein Paket ist zugleich die gespeicherte Zusammenstellung: <see cref="Lesen"/> holt
+/// Auswahl und Parameterwerte wieder heraus. Einen eigenen Speicher dafuer gibt es
+/// nicht - das Archiv, das man ohnehin aufhebt, ist die Vorlage fuer das naechste.
 /// </remarks>
 public sealed class PaketDienst
 {
@@ -115,6 +120,130 @@ public sealed class PaketDienst
     }
 
     /// <summary>
+    /// Schreibt das Paket als ZIP-Archiv. Im Archiv liegt ein Ordner, benannt wie die
+    /// Datei - entpackt ergibt das dasselbe wie <see cref="Erzeugen"/>.
+    /// </summary>
+    public int ErzeugenAlsZip(
+        string zipPfad,
+        string paketName,
+        IReadOnlyList<ScriptEintrag> skripte,
+        Func<ScriptEintrag, IReadOnlyList<SkriptParameter>>? parameterFuer = null)
+    {
+        var arbeitsordner = Path.Combine(Path.GetTempPath(), "AdminWerk-" + Guid.NewGuid().ToString("N"));
+        var paketOrdner = Path.Combine(arbeitsordner, Path.GetFileNameWithoutExtension(zipPfad));
+
+        try
+        {
+            var anzahl = Erzeugen(paketOrdner, paketName, skripte, parameterFuer);
+
+            // Erst nach dem erfolgreichen Zusammenstellen: scheitert das, bleibt ein
+            // vorhandenes Archiv gleichen Namens unangetastet.
+            if (File.Exists(zipPfad))
+            {
+                File.Delete(zipPfad);
+            }
+
+            ZipFile.CreateFromDirectory(
+                paketOrdner, zipPfad, CompressionLevel.Optimal, includeBaseDirectory: true);
+
+            return anzahl;
+        }
+        finally
+        {
+            try
+            {
+                Directory.Delete(arbeitsordner, recursive: true);
+            }
+            catch (IOException)
+            {
+                // Ein liegengebliebener Temp-Ordner ist kein Grund, das Paket zu verwerfen.
+            }
+            catch (UnauthorizedAccessException)
+            {
+            }
+        }
+    }
+
+    /// <summary>
+    /// Liest ein vorhandenes Paket: ein ZIP-Archiv, einen entpackten Ordner oder dessen
+    /// <c>paket.json</c>.
+    /// </summary>
+    public static GelesenesPaket Lesen(string pfad)
+    {
+        string json;
+
+        if (Directory.Exists(pfad))
+        {
+            json = File.ReadAllText(Path.Combine(pfad, "paket.json"), Encoding.UTF8);
+        }
+        else if (string.Equals(Path.GetExtension(pfad), ".zip", StringComparison.OrdinalIgnoreCase))
+        {
+            using var archiv = ZipFile.OpenRead(pfad);
+
+            // Die flachste paket.json gewinnt - im Archiv liegt sie eine Ebene tief,
+            // hat jemand den Ordnerinhalt selbst gepackt, ganz oben.
+            var eintrag = archiv.Entries
+                .Where(e => string.Equals(e.Name, "paket.json", StringComparison.OrdinalIgnoreCase))
+                .OrderBy(e => e.FullName.Count(z => z is '/' or '\\'))
+                .FirstOrDefault()
+                ?? throw new InvalidDataException("Das Archiv enthält keine paket.json - ist es ein AdminWerk-Prüfpaket?");
+
+            using var leser = new StreamReader(eintrag.Open(), Encoding.UTF8);
+            json = leser.ReadToEnd();
+        }
+        else
+        {
+            json = File.ReadAllText(pfad, Encoding.UTF8);
+        }
+
+        var paket = JsonSerializer.Deserialize<Paket>(json)
+                    ?? throw new InvalidDataException("paket.json ist leer.");
+
+        return new GelesenesPaket(
+            paket.Name,
+            paket.Skripte
+                .Where(s => !string.IsNullOrWhiteSpace(s.Id))
+                .Select(s => new GelesenesSkript(s.Id, s.Titel, LesbareArgumente(s.Argumente)))
+                .ToList());
+    }
+
+    /// <summary>
+    /// Bringt die Argumente aus der JSON-Form in die Form des Assistenten: Schalter als
+    /// <c>true</c>, alles andere als Text, Listen durch Komma getrennt.
+    /// </summary>
+    private static Dictionary<string, object> LesbareArgumente(Dictionary<string, object> roh)
+    {
+        var ergebnis = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var (name, wert) in roh)
+        {
+            if (wert is not JsonElement element)
+            {
+                continue;
+            }
+
+            switch (element.ValueKind)
+            {
+                case JsonValueKind.True:
+                    ergebnis[name] = true;
+                    break;
+                case JsonValueKind.String:
+                    ergebnis[name] = element.GetString() ?? string.Empty;
+                    break;
+                case JsonValueKind.Number:
+                    ergebnis[name] = element.GetRawText();
+                    break;
+                case JsonValueKind.Array:
+                    ergebnis[name] = string.Join(", ", element.EnumerateArray()
+                        .Select(e => e.ValueKind == JsonValueKind.String ? e.GetString() : e.GetRawText()));
+                    break;
+            }
+        }
+
+        return ergebnis;
+    }
+
+    /// <summary>
     /// Baut die Aufrufargumente eines Skripts: die Eingaben aus dem Assistenten,
     /// darueber der sichere Schalter aus dem Katalog.
     /// </summary>
@@ -208,6 +337,14 @@ public sealed class PaketDienst
         text.AppendLine("schreibt daraus einen HTML-Bericht. Fällt ein Skript um, laufen die");
         text.AppendLine("übrigen weiter.");
         text.AppendLine();
+        text.AppendLine("Kam das Archiv per Download oder E-Mail, markiert Windows die entpackten");
+        text.AppendLine("Dateien als „aus dem Internet“, und die Ausführungsrichtlinie `RemoteSigned`");
+        text.AppendLine("verweigert sie. Nach dem Lesen der Skripte im Paketordner:");
+        text.AppendLine();
+        text.AppendLine("```powershell");
+        text.AppendLine("Get-ChildItem -Recurse | Unblock-File");
+        text.AppendLine("```");
+        text.AppendLine();
 
         var brauchtAdmin = paket.Skripte.Count(s => s.AdminRechte);
         if (brauchtAdmin > 0)
@@ -234,6 +371,14 @@ public sealed class PaketDienst
 
         return text.ToString();
     }
+
+    /// <summary>Was aus einem vorhandenen Paket zurueckkommt.</summary>
+    public sealed record GelesenesPaket(string Name, IReadOnlyList<GelesenesSkript> Skripte);
+
+    /// <param name="Argumente">
+    /// Parametername auf <c>true</c> (Schalter) oder den Text, wie er im Assistenten steht.
+    /// </param>
+    public sealed record GelesenesSkript(string Id, string Titel, IReadOnlyDictionary<string, object> Argumente);
 
     private sealed class Paket
     {

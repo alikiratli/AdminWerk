@@ -47,7 +47,7 @@ der Aufruf nicht erst mittendrin an einer fehlenden Berechtigung.
 | **Volltextsuche** | Durchsucht Titel, Beschreibung, Schlagwörter **und** den Skriptinhalt |
 | **Syntaxhervorhebung** | PowerShell-Quelltext farblich aufbereitet (Kommentare, Cmdlets, Variablen, Parameter) |
 | **Parameter-Assistent** | Liest den `param()`-Block aus und baut daraus ein Formular — Textfeld, Auswahlliste oder Haken je nach Typ. Daraus entsteht die fertige Aufrufzeile |
-| **Prüfpakete** | Mehrere Skripte ankreuzen und als Ordner mitnehmen: Dateien, Läufer und HTML-Bericht |
+| **Prüfpakete** | Mehrere Skripte ankreuzen und als ZIP mitnehmen: Dateien, Läufer und HTML-Bericht; später wieder öffnen und anpassen |
 | **In PowerShell öffnen** | Öffnet eine Sitzung im Skriptverzeichnis und legt den Aufruf bereit — ausgeführt wird nichts |
 | **Zwischenablage** | Das vollständige Skript mit einem Klick kopieren |
 | **Als `.ps1` speichern** | Export mit UTF-8-BOM, damit Windows PowerShell 5.1 die Umlaute korrekt liest |
@@ -245,7 +245,9 @@ Server und will wissen, wie er dasteht.* Dafür kreuzt man in der Liste an, was 
 der Haken neben dem Stern — und klickt unten auf **Paket erzeugen**. Der Stern merkt sich
 dauerhaft, der Haken sammelt für das nächste Paket.
 
-Heraus kommt ein Ordner, den man auf das Zielsystem trägt:
+Heraus kommt ein ZIP-Archiv — eine Datei, die sich über die RDP-Zwischenablage, einen
+Share oder einen Stick auf das Zielsystem tragen lässt. Der Dateiname wird zum Paketnamen
+und steht über dem Bericht. Entpackt sieht es so aus:
 
 ```
 AdminWerk-Pruefpaket_2026-09-21_1743/
@@ -261,6 +263,10 @@ Dort dann:
 ```powershell
 .\Start-Pruefung.ps1 -Oeffnen
 ```
+
+Kam das Archiv per Download oder E-Mail, trägt Windows die Internetzone in die entpackten
+Dateien ein, und `RemoteSigned` verweigert sie. Nach dem Lesen hilft
+`Get-ChildItem -Recurse | Unblock-File` im Paketordner; das LIESMICH im Paket sagt es auch.
 
 Der Läufer ruft jedes Skript einmal auf und fängt dessen Ausgabe mit `*>&1` ein — damit
 auch alles, was über `Write-Host` geht. Der Bericht hält je Prüfung fest, ob der Lauf
@@ -287,6 +293,18 @@ Werte aus dem [Parameter-Assistenten](#parameter-assistent) wandern mit ins Pake
 Als Name-Wert-Paare, nicht als Zeichenkette: PowerShell verteilt ein gesplattetes Feld der
 Reihe nach auf die Stellungsparameter, `-NurPruefen` wäre dann ein Dienstname und kein
 Schalter.
+
+### Ein Paket wieder öffnen
+
+**Paket öffnen** oben rechts lädt ein vorhandenes Paket — das ZIP, den entpackten Ordner
+oder dessen `paket.json` — zurück in die Auswahl: dieselben Haken, dieselben Werte im
+Assistenten. So wird aus dem Paket vom letzten Monat das von heute, ohne alles neu
+anzuklicken.
+
+Einen eigenen Speicher für „Zusammenstellungen“ gibt es bewusst nicht. Das Archiv, das man
+ohnehin aufhebt, *ist* die Zusammenstellung. Skripte, die es im Katalog nicht mehr gibt,
+nennt die Statusleiste. Den sicheren Schalter schreibt das Öffnen nicht in den Assistenten
+zurück — das Paket setzt ihn selbst, und im Einzelaufruf hätte ihn niemand gewählt.
 
 ---
 
@@ -319,8 +337,9 @@ eine Sitzung mit Bildschirm — die hat der Windows-Runner (`SessionId 2`, 1024�
 laufen sie in der CI ebenso wie von Hand:
 
 ```powershell
-# Klickt sich durch Kategorien, Suche, Parameterassistent, Favoriten und
-# "In PowerShell öffnen" — 40 Einzelprüfungen mit Bilanz am Ende
+# Klickt sich durch Kategorien, Suche, Parameterassistent, Favoriten,
+# "In PowerShell öffnen" und Prüfpakete (speichern und wieder öffnen, über
+# die echten Dateidialoge) — 52 Einzelprüfungen mit Bilanz am Ende
 .\tools\oberflaechentest.ps1
 
 # Wählt jedes Skript des Katalogs einmal aus und prüft, ob der Assistent

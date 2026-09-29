@@ -76,6 +76,11 @@
                         </TextBlock>
                     </Grid>
 
+                    <Button Content="Paket öffnen"
+                            Style="{StaticResource Schaltflaeche.Sekundaer}"
+                            Command="{Binding PaketOeffnenBefehl}"
+                            ToolTip="Ein gespeichertes Prüfpaket wieder in die Auswahl laden – samt Parameterwerten"
+                            Margin="0,0,8,0" />
                     <Button Content="Skriptordner"
                             Style="{StaticResource Schaltflaeche.Sekundaer}"
                             Command="{Binding SkriptordnerOeffnenBefehl}"
@@ -471,7 +476,7 @@
                                 Padding="12,4"
                                 FontSize="12"
                                 Margin="12,0,0,0"
-                                ToolTip="Die ausgewählten Skripte als Ordner mit Läufer und Bericht ablegen" />
+                                ToolTip="Die ausgewählten Skripte als ZIP mit Läufer und Bericht speichern" />
                         <Button Content="Auswahl leeren"
                                 Style="{StaticResource Schaltflaeche.Sekundaer}"
                                 Command="{Binding PaketLeerenBefehl}"

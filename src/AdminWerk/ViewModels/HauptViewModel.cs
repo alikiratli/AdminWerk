@@ -57,6 +57,7 @@ public sealed class HauptViewModel : ViewModelBasis
         InPowerShellOeffnenBefehl = new AktionsBefehl(_ => InPowerShellOeffnen(), _ => AusgewaehltesSkript is not null);
         PaketErzeugenBefehl = new AktionsBefehl(_ => PaketErzeugen(), _ => PaketAnzahl > 0);
         PaketLeerenBefehl = new AktionsBefehl(_ => PaketLeeren(), _ => PaketAnzahl > 0);
+        PaketOeffnenBefehl = new AktionsBefehl(_ => PaketOeffnen(), _ => !HatLadefehler);
         ParameterLeerenBefehl = new AktionsBefehl(_ => ParameterLeeren(), _ => HatParameter);
 
         KatalogLaden();
@@ -87,6 +88,8 @@ public sealed class HauptViewModel : ViewModelBasis
     public AktionsBefehl PaketErzeugenBefehl { get; }
 
     public AktionsBefehl PaketLeerenBefehl { get; }
+
+    public AktionsBefehl PaketOeffnenBefehl { get; }
 
     public int PaketAnzahl => _alleSkripte.Count(s => s.ImPaket);
 
@@ -374,9 +377,14 @@ public sealed class HauptViewModel : ViewModelBasis
     }
 
     /// <summary>
-    /// Schreibt die ausgewaehlten Skripte als Pruefpaket in einen Ordner: die Dateien,
+    /// Schreibt die ausgewaehlten Skripte als Pruefpaket in ein ZIP-Archiv: die Dateien,
     /// den Laeufer und die Beschreibung. Ausgefuehrt wird nichts.
     /// </summary>
+    /// <remarks>
+    /// Ein Archiv statt eines Ordners, weil es auf dem Weg zum Zielsystem eine Datei
+    /// ist - ueber die RDP-Zwischenablage, einen Share oder einen Stick. Der Dateiname
+    /// wird zum Paketnamen und steht so auch ueber dem Bericht.
+    /// </remarks>
     private void PaketErzeugen()
     {
         var gewaehlt = _alleSkripte.Where(s => s.ImPaket).ToList();
@@ -385,10 +393,12 @@ public sealed class HauptViewModel : ViewModelBasis
             return;
         }
 
-        var dialog = new OpenFolderDialog
+        var dialog = new SaveFileDialog
         {
-            Title = "Wohin soll das Prüfpaket?",
-            Multiselect = false
+            Title = "Prüfpaket speichern",
+            FileName = $"AdminWerk-Pruefpaket_{DateTime.Now:yyyy-MM-dd_HHmm}.zip",
+            DefaultExt = ".zip",
+            Filter = "Prüfpaket (*.zip)|*.zip"
         };
 
         if (dialog.ShowDialog() != true)
@@ -396,24 +406,117 @@ public sealed class HauptViewModel : ViewModelBasis
             return;
         }
 
-        var name = $"AdminWerk-Pruefpaket_{DateTime.Now:yyyy-MM-dd_HHmm}";
-        var ziel = Path.Combine(dialog.FolderName, name);
+        var ziel = dialog.FileName;
+        var name = Path.GetFileNameWithoutExtension(ziel);
 
         try
         {
-            var anzahl = _paketDienst.Erzeugen(ziel, "Prüfpaket", gewaehlt, ParameterFuer);
+            var anzahl = _paketDienst.ErzeugenAlsZip(ziel, name, gewaehlt, ParameterFuer);
 
             var fehlend = gewaehlt.Count - anzahl;
             Statusmeldung = fehlend == 0
                 ? $"Prüfpaket mit {anzahl} Skripten erstellt: {ziel}"
                 : $"Prüfpaket mit {anzahl} Skripten erstellt; {fehlend} Datei(en) fehlten im Katalog.";
 
-            Process.Start(new ProcessStartInfo(ziel) { UseShellExecute = true });
+            // Den Ordner zeigen, das Archiv darin markiert - weitertragen ist der naechste Schritt.
+            Process.Start(new ProcessStartInfo("explorer.exe")
+            {
+                UseShellExecute = true,
+                ArgumentList = { "/select,", ziel }
+            });
         }
         catch (Exception ex)
         {
             Statusmeldung = $"Prüfpaket konnte nicht erstellt werden: {ex.Message}";
         }
+    }
+
+    /// <summary>
+    /// Laedt ein vorhandenes Pruefpaket zurueck in die Auswahl: welche Skripte darin
+    /// liegen und mit welchen Werten. So wird aus dem Paket vom letzten Monat das von heute.
+    /// </summary>
+    private void PaketOeffnen()
+    {
+        var dialog = new OpenFileDialog
+        {
+            Title = "Prüfpaket öffnen",
+            Filter = "Prüfpaket (*.zip, paket.json)|*.zip;paket.json|Alle Dateien (*.*)|*.*"
+        };
+
+        if (dialog.ShowDialog() != true)
+        {
+            return;
+        }
+
+        PaketDienst.GelesenesPaket paket;
+        try
+        {
+            paket = PaketDienst.Lesen(dialog.FileName);
+        }
+        catch (Exception ex)
+        {
+            Statusmeldung = $"Prüfpaket konnte nicht gelesen werden: {ex.Message}";
+            return;
+        }
+
+        PaketUebernehmen(paket);
+    }
+
+    /// <summary>Ersetzt die Paketauswahl und die Assistentenwerte durch die des Pakets.</summary>
+    /// <remarks>
+    /// Ersetzen, nicht ergaenzen: wer ein Paket oeffnet, will genau dieses wieder haben.
+    /// Der sichere Schalter wird nicht in den Assistenten zurueckgeschrieben - das Paket
+    /// setzt ihn ohnehin, und im Einzelaufruf haette ihn niemand gewaehlt.
+    /// </remarks>
+    private void PaketUebernehmen(PaketDienst.GelesenesPaket paket)
+    {
+        var nachId = _alleSkripte.ToDictionary(s => s.Id, StringComparer.OrdinalIgnoreCase);
+
+        foreach (var skript in _alleSkripte)
+        {
+            skript.ImPaket = false;
+        }
+
+        var unbekannt = new List<string>();
+        var uebernommen = 0;
+
+        foreach (var eintrag in paket.Skripte)
+        {
+            if (!nachId.TryGetValue(eintrag.Id, out var skript))
+            {
+                unbekannt.Add(eintrag.Titel.Length > 0 ? eintrag.Titel : eintrag.Id);
+                continue;
+            }
+
+            skript.ImPaket = true;
+            uebernommen++;
+
+            var sicher = skript.SichererSchalter.Trim().TrimStart('-');
+
+            foreach (var p in ParameterFuer(skript))
+            {
+                p.Zuruecksetzen();
+
+                if (!eintrag.Argumente.TryGetValue(p.Name, out var wert)
+                    || string.Equals(p.Name, sicher, StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                if (p.IstSchalter)
+                {
+                    p.Gesetzt = wert is true;
+                }
+                else if (wert is string text)
+                {
+                    p.Wert = text;
+                }
+            }
+        }
+
+        Statusmeldung = unbekannt.Count == 0
+            ? $"„{paket.Name}“ geöffnet: {uebernommen} Skripte in der Auswahl."
+            : $"„{paket.Name}“ geöffnet: {uebernommen} Skripte übernommen, nicht im Katalog: {string.Join(", ", unbekannt)}";
     }
 
     /// <summary>Liest den param()-Block des ausgewaehlten Skripts und baut den Assistenten neu auf.</summary>
