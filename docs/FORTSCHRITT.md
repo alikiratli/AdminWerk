@@ -5,6 +5,93 @@ wurden und was als Nächstes ansteht.
 
 ---
 
+## Tag 4 — 29.09.2026
+
+### Ergebnis
+
+Ein kurzer Tag, ein Punkt aus der Liste: **Prüfpakete weiterdenken.** Das Paket entsteht
+jetzt als **ZIP** statt als Ordner, und ein vorhandenes Paket lässt sich über **Paket
+öffnen** wieder in Auswahl und Assistent laden.
+
+| | Vorher | Nachher |
+|---|---|---|
+| Paket auf dem Weg zum Zielsystem | ein Ordner mit Unterordnern | eine Datei |
+| Paketname | fest „Prüfpaket“ | der Dateiname, steht über dem Bericht |
+| Dasselbe Paket nächsten Monat | alles neu ankreuzen und eintragen | Paket öffnen |
+| Oberfläche geprüft | 40 Prüfungen | 52, einschließlich beider Dateidialoge |
+
+### Entscheidungen
+
+**Das Paket ist die gespeicherte Zusammenstellung.** Auf der Liste stand „Zusammenstellungen
+speichern und wiederverwenden“. Der naheliegende Weg wäre eine `zusammenstellungen.json`
+unter `%AppData%` gewesen, mit Namensdialog und Auswahlliste. Aber das Paket enthält schon
+alles, was eine Zusammenstellung ausmacht: welche Skripte, mit welchen Werten. Und das Archiv
+hebt man ohnehin auf. Ein zweiter Speicher hätte nur die Frage aufgeworfen, welcher von
+beiden gilt. **Paket öffnen** nimmt ein ZIP, einen entpackten Ordner oder die `paket.json`.
+
+**Öffnen ersetzt die Auswahl, statt sie zu ergänzen.** Wer ein Paket öffnet, will genau
+dieses wieder haben. Skripte, die es im Katalog nicht mehr gibt, nennt die Statusleiste.
+
+**Der sichere Schalter geht beim Öffnen nicht in den Assistenten zurück.** In der
+`paket.json` steht `NurPruefen: true`, weil das Paket ihn setzt. Im Assistenten gehört er
+zum Einzelaufruf, und dort hat ihn niemand gewählt. Beim nächsten Paket setzt ihn der
+Katalog ohnehin wieder.
+
+**Das LIESMICH nennt `Unblock-File`.** Ein ZIP, das per Download oder E-Mail kommt, trägt
+die Internetzone an jede entpackte Datei weiter, und `RemoteSigned` verweigert sie dann.
+Beim Ordner über einen Share war das seltener ein Thema, beim Archiv wird es der Normalfall.
+
+### Geprüft
+
+* `dotnet build` in `Release` mit `-warnaserror`: 0 Warnungen, 0 Fehler
+* Rundlauf über den Dienst: Paket mit Listen-, Text- und Schalterwerten als ZIP erzeugt,
+  wieder eingelesen, alle Werte in der Form des Assistenten zurück
+* Das Archiv mit **Windows PowerShell 5.1** entpackt (`Expand-Archive`) und den Läufer darin
+  **ausgeführt**: Ordnerstruktur wie beim alten Ordnerpaket, Bericht mit 8× OK, 2× HINWEIS,
+  Paketname mit Umlaut korrekt im HTML
+* Oberflächentest örtlich und auf dem Runner: 52 von 52. Der neue Abschnitt kreuzt zwei
+  Skripte an, trägt einen Listenwert ein, speichert über den echten Dialog, leert alles
+  und öffnet das Paket wieder
+* `katalog-pruefen.ps1` und PSScriptAnalyzer: keine Befunde
+
+### Aufgefallen
+
+* **Der verwaltete UIA-Client sieht die Felder der Dateidialoge nicht.** Das Namensfeld
+  (Id 1148 beim Öffnen, 1001 beim Speichern) erscheint als `Pane` ohne Wertmuster. Der Test
+  geht deshalb über Win32: Edit-Fenster über `EnumChildWindows` suchen, Nachricht schicken,
+  mit `WM_COMMAND IDOK` bestätigen. Das braucht keinen Fokus, was auf dem Runner zählt.
+* **`WM_SETTEXT` reicht beim Speichern-Dialog nicht.** Der Text stand im Feld, gespeichert
+  wurde trotzdem unter dem Vorschlagsnamen, dreimal nacheinander in *Dokumente*. Der Dialog
+  führt den Dateinamen intern und übernimmt nur, was als Eingabe ankommt. Mit `WM_CHAR` je
+  Zeichen geht es. Beim Öffnen-Dialog hatte `WM_SETTEXT` genügt, daher fiel es erst beim
+  Speichern auf.
+* **PowerShell unterscheidet bei Variablen keine Groß- und Kleinschreibung.** Zweimal an
+  einem Abend: `$haken` in einer Schleife überschrieb `$Haken` (den `ControlType` für
+  Kontrollkästchen), `$eintrag` später `$Eintrag`. Beide Male scheiterte erst eine *spätere*
+  Suche, mit einer Meldung über `PropertyCondition`, die auf die Ursache nicht hinweist.
+* **Die Oberflächentests haben einmal geflattert**, wie in der letzten Notiz befürchtet.
+  Nach fünf festen Sekunden hatte die Anwendung auf dem Runner noch kein Fenster, der
+  Prozess lief aber. Beide Tests warten jetzt bis zu 30 Sekunden auf das Fenster, statt eine
+  feste Zeit zu schlafen. Der nächste Lauf war grün. Die Beobachtung läuft weiter.
+* `ZipFile.CreateFromDirectory` schreibt unter .NET 8 auch auf Windows `/` als Trenner.
+  `Expand-Archive` unter 5.1 kommt damit zurecht, nachgemessen.
+
+### Als Nächstes
+
+* [x] ~~Prüfpakete: Paket als ZIP statt als Ordner~~
+* [x] ~~Zusammenstellungen speichern und wiederverwenden~~: durch *Paket öffnen* erledigt
+* [ ] Prüfpakete: mehrere Zielsysteme in einem Bericht. Offen ist, ob der Läufer per
+      `Invoke-Command` verteilt oder ob mehrere Einzelberichte zusammengeführt werden. Das
+      Zweite braucht kein WinRM und passt besser zu „das Paket wird dort von Hand gestartet“
+* [ ] Suchfeld über `Strg+F` erreichbar machen, Tastaturbedienung insgesamt schärfen
+* [ ] Katalog um weitere Bereiche erweitern: Drucker, Hyper-V, Zertifikate, Exchange
+* [ ] Überlegen, ob rein lesende Skripte ihren Bericht in der Anwendung anzeigen dürfen.
+      `catalog.json` bräuchte dafür ein Feld, das die CI gegenprüft
+* [ ] Oberflächentests weiter beobachten. Flattern sie trotz der Wartezeit, zuerst ins
+      Protokoll von „Sitzung beschreiben“ sehen
+
+---
+
 ## Tag 3 — 21.09.2026
 
 ### Ergebnis
