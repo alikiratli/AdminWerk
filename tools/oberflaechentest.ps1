@@ -93,13 +93,23 @@ Get-Process -Name AdminWerk -ErrorAction SilentlyContinue | Stop-Process -Force
 Start-Sleep -Milliseconds 600
 
 $proz = Start-Process -FilePath $Anwendung -PassThru
-Start-Sleep -Seconds 5
-$proz = Get-Process -Id $proz.Id -ErrorAction SilentlyContinue
 
-if (-not $proz -or $proz.MainWindowHandle -eq 0) {
-    Write-Host 'Die Anwendung hat kein Fenster geoeffnet - Abbruch.' -ForegroundColor Red
+# Auf das Fenster warten statt eine feste Zeit: auf einem kalten Runner braucht der
+# erste Start eines .NET-Programms mitunter deutlich laenger als auf dem eigenen
+# Rechner. Fuenf feste Sekunden haben dort einmal nicht gereicht.
+$frist = (Get-Date).AddSeconds(30)
+do {
+    Start-Sleep -Milliseconds 500
+    $proz.Refresh()
+} while (-not $proz.HasExited -and $proz.MainWindowHandle -eq 0 -and (Get-Date) -lt $frist)
+
+if ($proz.HasExited -or $proz.MainWindowHandle -eq 0) {
+    Write-Host 'Die Anwendung hat binnen 30 Sekunden kein Fenster geoeffnet - Abbruch.' -ForegroundColor Red
     exit 1
 }
+
+# Das Fenster steht, der Katalog wird aber erst danach befuellt.
+Start-Sleep -Seconds 2
 
 $fenster = [System.Windows.Automation.AutomationElement]::FromHandle($proz.MainWindowHandle)
 
