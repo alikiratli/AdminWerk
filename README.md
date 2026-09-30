@@ -42,7 +42,7 @@ der Aufruf nicht erst mittendrin an einer fehlenden Berechtigung.
 
 | Funktion | Beschreibung |
 |---|---|
-| **Kategorien** | System, Netzwerk, Konten und Security als eigene Bereiche, dazu eine Gesamtansicht |
+| **Kategorien** | System, Netzwerk, Drucker, Konten und Security als eigene Bereiche, dazu eine Gesamtansicht |
 | **Favoriten** | Häufig gebrauchte Skripte mit dem Stern markieren (oder `Strg+D`) und über den eigenen Reiter „Favoriten“ wiederfinden |
 | **Volltextsuche** | Durchsucht Titel, Beschreibung, Schlagwörter **und** den Skriptinhalt |
 | **Syntaxhervorhebung** | PowerShell-Quelltext farblich aufbereitet (Kommentare, Cmdlets, Variablen, Parameter) |
@@ -61,7 +61,7 @@ sowohl einen Neustart der Anwendung als auch eine Erweiterung des Skriptkatalogs
 
 ## Skriptkatalog
 
-Aktuell **51 Skripte** in vier Bereichen.
+Aktuell **54 Skripte** in fünf Bereichen.
 
 ### ▣ System (16)
 
@@ -100,9 +100,20 @@ Aktuell **51 Skripte** in vier Bereichen.
 | Aktive Firewall-Regeln auswerten | Eingehende Erlaubnisregeln mit Port, Quelle und Programm |
 | SMB-Freigaben und Berechtigungen | Freigabe- und NTFS-Rechte plus aktive Sitzungen |
 
+### ▤ Drucker (3)
+
+Druckserver und Arbeitsplätze. Andere Computer werden über WMI mit DCOM abgefragt, WinRM
+ist dafür nicht nötig. Das Skript für hängende Aufträge entfernt erst mit `-Anwenden` etwas.
+
+| Skript | Zweck |
+|---|---|
+| **Drucker, Treiber und Anschlüsse** | Zustand, Treiber, TCP/IP-Adresse, SNMP und Freigabe je Computer, optional mit Anschlusstest |
+| **Hängende Druckaufträge finden und entfernen** | Aufträge über einer Altersgrenze, auf Wunsch mit Neustart der Warteschlange |
+| **Druckertreiber und Point-and-Print-Härtung** | Ungenutzte Treiber, PrintNightmare-Richtlinien, Spooler auf Domänencontrollern |
+
 ### ◍ Konten (11)
 
-Benutzer, Gruppen und Active Directory. Die vier Skripte, die etwas **verändern**, laufen
+Benutzer, Gruppen und Active Directory. Die drei Skripte, die etwas **verändern**, laufen
 standardmäßig als Testlauf und tun erst mit `-Anwenden` etwas.
 
 | Skript | Zweck |
@@ -203,7 +214,7 @@ Die Schaltfläche **Skriptordner** öffnet das Verzeichnis direkt im Explorer.
 
 ## Parameter-Assistent
 
-42 der 51 Skripte haben Parameter — zusammen 126. Wer das Skript nur kopiert, muss den
+45 der 54 Skripte haben Parameter — zusammen 135. Wer das Skript nur kopiert, muss den
 Aufruf von Hand zusammensetzen und dafür erst den `param()`-Block lesen. Der Assistent
 nimmt das ab: unter der Detailansicht steht **Parameter (n)**, aufgeklappt erscheint je
 Parameter eine Zeile.
@@ -273,8 +284,8 @@ auch alles, was über `Write-Host` geht. Der Bericht hält je Prüfung fest, ob 
 durchging (`OK`, `HINWEIS`, `FEHLER`), wie lange er dauerte und was dabei herauskam.
 Fällt ein Skript um, laufen die übrigen weiter.
 
-**Ein Prüfpaket verändert nichts.** Von den 51 Skripten können 5 etwas am System ändern.
-Drei davon sind ohne `-Anwenden` ohnehin ein Testlauf; zwei — Dienste starten,
+**Ein Prüfpaket verändert nichts.** Von den 54 Skripten können 6 etwas am System ändern.
+Vier davon sind ohne `-Anwenden` ohnehin ein Testlauf; zwei — Dienste starten,
 Systemdateien reparieren — ändern ohne Zutun und sind erst mit `-NurPruefen` zahm. Welcher
 Schalter ein Skript zähmt, steht im Katalog als `sichererSchalter`, und der Läufer setzt
 ihn selbsttätig. Setzt man `-Anwenden` im Assistenten, bleibt dieser Schalter beim Paket
@@ -403,6 +414,7 @@ AdminWerk/
         ├── catalog.json
         ├── system/
         ├── netzwerk/
+        ├── drucker/
         ├── konten/
         └── security/
 ```

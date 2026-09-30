@@ -13,6 +13,12 @@
       "beschreibung": "Diagnose, Ports, DNS, DHCP, Firewall-Regeln und Freigaben."
     },
     {
+      "id": "drucker",
+      "name": "Drucker",
+      "symbol": "▤",
+      "beschreibung": "Druckerbestand, hängende Aufträge, Treiber und Point-and-Print."
+    },
+    {
       "id": "konten",
       "name": "Konten",
       "symbol": "◍",
@@ -431,6 +437,55 @@
       "adminRechte": true,
       "veraendert": false,
       "voraussetzung": "Modul DnsServer (RSAT)"
+    },
+    {
+      "id": "drk-bestand",
+      "kategorie": "drucker",
+      "titel": "Drucker, Treiber und Anschlüsse",
+      "beschreibung": "Bestandsaufnahme je Computer: Zustand, Treiber, TCP/IP-Adresse, SNMP und Freigabe. Meldet Drucker, die offline sind oder einen Fehler zeigen; auf Wunsch mit Anschlusstest. Mehrere Druckserver über WMI mit DCOM, ohne WinRM.",
+      "datei": "drucker/drucker-bestand.ps1",
+      "tags": [
+        "Drucker",
+        "Inventar",
+        "Druckserver",
+        "Mehrere Systeme"
+      ],
+      "adminRechte": false,
+      "veraendert": false,
+      "voraussetzung": "WMI-Zugriff (DCOM) auf die Zielsysteme"
+    },
+    {
+      "id": "drk-auftraege-haengend",
+      "kategorie": "drucker",
+      "titel": "Hängende Druckaufträge finden und entfernen",
+      "beschreibung": "Listet Aufträge, die länger als eine einstellbare Zeit in der Warteschlange stehen, mit Dokument, Besitzer und Zustand. Ohne -Anwenden reiner Testlauf; mit -SpoolerNeustarten wird die Warteschlange danach neu gestartet.",
+      "datei": "drucker/druckauftraege-haengend.ps1",
+      "tags": [
+        "Drucker",
+        "Warteschlange",
+        "Spooler",
+        "Testlauf"
+      ],
+      "adminRechte": true,
+      "veraendert": true,
+      "sichererSchalter": "",
+      "voraussetzung": "WMI-Zugriff (DCOM) auf die Zielsysteme"
+    },
+    {
+      "id": "drk-treiber-pointandprint",
+      "kategorie": "drucker",
+      "titel": "Druckertreiber und Point-and-Print-Härtung",
+      "beschreibung": "Installierte Treiber mit Version und ungenutzten Kandidaten, die Point-and-Print-Richtlinien seit PrintNightmare und die Druckwarteschlange auf Domänencontrollern.",
+      "datei": "drucker/druckertreiber-pointandprint.ps1",
+      "tags": [
+        "Drucker",
+        "Treiber",
+        "PrintNightmare",
+        "Härtung"
+      ],
+      "adminRechte": false,
+      "veraendert": false,
+      "voraussetzung": "Windows 10/11, Server 2016+"
     },
     {
       "id": "kon-ad-benutzer-anlegen",
