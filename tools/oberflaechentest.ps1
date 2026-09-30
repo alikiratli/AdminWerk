@@ -249,7 +249,31 @@ Pruefe 'Eine leere Trefferliste zeigt einen Hinweis' {
 # Tastatur. Anders als bei den Dateidialogen geht es hier nicht ohne echte Tasten:
 # Strg+F soll gerade von woanders her ins Suchfeld fuehren. SetFocus ueber UIA holt
 # das Fenster dabei in den Vordergrund, SendKeys schickt dann dorthin.
+#
+# SendKeys schickt an das Fenster, das gerade vorn ist - welches auch immer. Schiebt
+# sich waehrend des Tests ein anderes Programm davor (ein Messenger mit neuer
+# Nachricht), landen Text und Eingabe dort. Deshalb wird vor jedem Tastendruck
+# geprueft, wem der Vordergrund gehoert, und im Zweifel nichts gesendet.
 Add-Type -AssemblyName System.Windows.Forms
+Add-Type -TypeDefinition @'
+using System;
+using System.Runtime.InteropServices;
+
+public static class Vordergrund
+{
+    [DllImport("user32.dll")] static extern IntPtr GetForegroundWindow();
+    [DllImport("user32.dll")] static extern uint GetWindowThreadProcessId(IntPtr fenster, out uint prozess);
+
+    public static uint Prozess()
+    {
+        uint prozess;
+        GetWindowThreadProcessId(GetForegroundWindow(), out prozess);
+        return prozess;
+    }
+}
+'@
+
+$script:TastenGesperrt = $false
 
 function Fokus {
     [System.Windows.Automation.AutomationElement]::FocusedElement
@@ -257,6 +281,22 @@ function Fokus {
 
 function Tippe {
     param([string]$Tasten)
+
+    if ($script:TastenGesperrt) { return }
+
+    if ([Vordergrund]::Prozess() -ne $proz.Id) {
+        $fenster.SetFocus()
+        Start-Sleep -Milliseconds 500
+    }
+    if ([Vordergrund]::Prozess() -ne $proz.Id) {
+        # Einmal gesperrt, bleibt es dabei: die folgenden Pruefungen schlagen dann
+        # fehl, statt Tasten in ein fremdes Programm zu schicken.
+        $script:TastenGesperrt = $true
+        $fremd = Get-Process -Id ([Vordergrund]::Prozess()) -ErrorAction SilentlyContinue
+        Write-Host ("  Ein anderes Programm ist im Vordergrund ({0}) - keine Tasten gesendet." -f $fremd.ProcessName) -ForegroundColor Yellow
+        return
+    }
+
     [System.Windows.Forms.SendKeys]::SendWait($Tasten)
     Start-Sleep -Milliseconds 700
 }
@@ -292,6 +332,29 @@ Pruefe 'Esc leert das Suchfeld' { (Wert $suchfeld) -eq '' } (Wert $suchfeld)
 Pruefe 'Nach Esc zeigt die Liste wieder alles' {
     $null -ne (AlleVomTyp $Text | Where-Object { $_.Current.Name -eq $zaehler['Alle Skripte'] })
 } $zaehler['Alle Skripte']
+
+# In der Liste: Pfeil nach unten, Leertaste legt ins Paket, noch einmal nimmt heraus.
+(AlleVomTyp $Eintrag | Where-Object { $_.Current.Name -notin $kategorien } | Select-Object -First 1).SetFocus()
+Start-Sleep -Milliseconds 400
+Tippe '{DOWN}'
+$zweiter = (Fokus).Current.Name
+Tippe ' '
+Pruefe 'Die Leertaste legt das Skript ins Paket' { $null -ne (Suche '1 Skript im Paket' $Text) } $zweiter
+$kasten = Suche "Ins Prüfpaket: $zweiter" $Haken
+Pruefe 'Der Haken am Eintrag zeigt es an' {
+    $kasten.GetCurrentPattern([System.Windows.Automation.TogglePattern]::Pattern).Current.ToggleState -eq
+        [System.Windows.Automation.ToggleState]::On
+}
+Tippe ' '
+Pruefe 'Noch einmal nimmt es wieder heraus' { $null -eq (Suche '1 Skript im Paket' $Text) }
+
+# Von der Liste aus fuehrt Tab ueber Haken und Stern in die Detailansicht, nicht
+# auf den namenlosen Griff zwischen beiden Spalten.
+Tippe '{TAB}{TAB}{TAB}'
+$f = Fokus
+Pruefe 'Nach Liste, Haken und Stern kommt die erste Schaltflaeche der Details' {
+    $f.Current.Name -eq 'In Zwischenablage kopieren'
+} ('{0} "{1}"' -f $f.Current.ControlType.ProgrammaticName, $f.Current.Name)
 
 # ============================================================================
 Write-Host ''

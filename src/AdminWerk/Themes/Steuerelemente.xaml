@@ -1,6 +1,25 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
+    <!-- ===================== Tastaturfokus ===================== -->
+
+    <!-- Der WPF-Standard ist ein schwarz gepunkteter Rahmen - auf dem dunklen Grund
+         nicht zu sehen. WPF zeigt ihn nur, wenn die Tastatur den Fokus gesetzt hat;
+         wer klickt, sieht ihn nicht. -->
+    <Style x:Key="Fokusrahmen">
+        <Setter Property="Control.Template">
+            <Setter.Value>
+                <ControlTemplate>
+                    <Border Margin="-3"
+                            BorderBrush="{StaticResource Akzent.Hell}"
+                            BorderThickness="2"
+                            CornerRadius="8"
+                            SnapsToDevicePixels="True" />
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <!-- ===================== Schaltflaechen ===================== -->
 
     <Style x:Key="Schaltflaeche.Basis" TargetType="Button">
@@ -10,6 +29,7 @@
         <Setter Property="Padding" Value="16,9" />
         <Setter Property="Cursor" Value="Hand" />
         <Setter Property="SnapsToDevicePixels" Value="True" />
+        <Setter Property="FocusVisualStyle" Value="{StaticResource Fokusrahmen}" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
@@ -63,6 +83,7 @@
         <Setter Property="Padding" Value="8,0,2,0" />
         <Setter Property="VerticalAlignment" Value="Top" />
         <Setter Property="ToolTip" Value="Als Favorit merken (Strg+D)" />
+        <Setter Property="FocusVisualStyle" Value="{StaticResource Fokusrahmen}" />
         <!-- Titel mitfuehren: in einer Liste mit 13 Sternen waere "Als Favorit merken"
              allein nicht unterscheidbar. -->
         <Setter Property="AutomationProperties.Name" Value="{Binding Titel, StringFormat='Als Favorit merken: {0}'}" />
@@ -241,6 +262,7 @@
         <Setter Property="FontSize" Value="12.5" />
         <Setter Property="Foreground" Value="{StaticResource Text.Sekundaer}" />
         <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="FocusVisualStyle" Value="{StaticResource Fokusrahmen}" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="CheckBox">
@@ -293,6 +315,7 @@
 
                         <ToggleButton Grid.Row="0"
                                       Cursor="Hand"
+                                      FocusVisualStyle="{StaticResource Fokusrahmen}"
                                       IsChecked="{Binding IsExpanded, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}">
                             <ToggleButton.Template>
                                 <ControlTemplate TargetType="ToggleButton">
@@ -349,6 +372,7 @@
                 <Style TargetType="ListBoxItem">
                     <Setter Property="Margin" Value="0,0,6,0" />
                     <Setter Property="Cursor" Value="Hand" />
+                    <Setter Property="FocusVisualStyle" Value="{StaticResource Fokusrahmen}" />
                     <!-- Ohne dies meldet die UI-Automation den Typnamen des Modells
                          statt der Beschriftung - Sprachausgabe und Oberflaechentests
                          haetten sonst nichts Lesbares. -->
@@ -414,6 +438,7 @@
                 <Style TargetType="ListBoxItem">
                     <Setter Property="Margin" Value="0,0,0,6" />
                     <Setter Property="Cursor" Value="Hand" />
+                    <Setter Property="FocusVisualStyle" Value="{StaticResource Fokusrahmen}" />
                     <Setter Property="HorizontalContentAlignment" Value="Stretch" />
                     <Setter Property="AutomationProperties.Name" Value="{Binding Titel}" />
                     <Setter Property="AutomationProperties.HelpText" Value="{Binding Beschreibung}" />

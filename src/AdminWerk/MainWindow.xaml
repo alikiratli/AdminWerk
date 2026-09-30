@@ -167,6 +167,11 @@
                          AutomationProperties.Name="Skripte der gewaehlten Kategorie"
                          ItemsSource="{Binding GefilterteSkripte}"
                          SelectedItem="{Binding AusgewaehltesSkript}">
+                    <!-- Mit den Pfeiltasten durch die Liste, mit der Leertaste ins Paket -
+                         ohne fuer jedes Skript per Tab bis zum Haken zu gehen. -->
+                    <ListBox.InputBindings>
+                        <KeyBinding Key="Space" Command="{Binding PaketUmschaltenBefehl}" />
+                    </ListBox.InputBindings>
                     <ListBox.ItemTemplate>
                         <DataTemplate>
                             <Grid>
@@ -184,7 +189,7 @@
                                           Margin="0,1,11,0"
                                           VerticalAlignment="Top"
                                           AutomationProperties.Name="{Binding Titel, StringFormat=Ins Prüfpaket: {0}}"
-                                          ToolTip="Für das Prüfpaket auswählen" />
+                                          ToolTip="Für das Prüfpaket auswählen (Leertaste)" />
 
                                 <StackPanel Grid.Column="1">
                                     <TextBlock Text="{Binding Titel}"
@@ -220,7 +225,8 @@
                           Width="10"
                           HorizontalAlignment="Center"
                           VerticalAlignment="Stretch"
-                          Background="Transparent" />
+                          Background="Transparent"
+                          IsTabStop="False" />
 
             <!-- Detailansicht -->
             <Border Grid.Column="2"

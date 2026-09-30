@@ -53,6 +53,8 @@ public sealed class HauptViewModel : ViewModelBasis
             _ => !string.IsNullOrEmpty(Suchbegriff));
         NeuLadenBefehl = new AktionsBefehl(_ => KatalogLaden());
         FavoritUmschaltenBefehl = new AktionsBefehl(FavoritUmschalten, p => (p ?? AusgewaehltesSkript) is not null);
+        PaketUmschaltenBefehl = new AktionsBefehl(_ => AusgewaehltesSkript!.ImPaket = !AusgewaehltesSkript.ImPaket,
+            _ => AusgewaehltesSkript is not null);
         AufrufKopierenBefehl = new AktionsBefehl(_ => AufrufKopieren(), _ => HatParameter);
         InPowerShellOeffnenBefehl = new AktionsBefehl(_ => InPowerShellOeffnen(), _ => AusgewaehltesSkript is not null);
         PaketErzeugenBefehl = new AktionsBefehl(_ => PaketErzeugen(), _ => PaketAnzahl > 0);
@@ -78,6 +80,9 @@ public sealed class HauptViewModel : ViewModelBasis
     public AktionsBefehl NeuLadenBefehl { get; }
 
     public AktionsBefehl FavoritUmschaltenBefehl { get; }
+
+    // Leertaste in der Skriptliste: das gewaehlte Skript ins Pruefpaket oder heraus.
+    public AktionsBefehl PaketUmschaltenBefehl { get; }
 
     public AktionsBefehl AufrufKopierenBefehl { get; }
 
