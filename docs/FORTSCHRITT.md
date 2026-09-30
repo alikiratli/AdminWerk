@@ -5,6 +5,97 @@ wurden und was als Nächstes ansteht.
 
 ---
 
+## Tag 5 — 30.09.2026
+
+### Ergebnis
+
+Wieder ein Punkt aus der Liste: **mehrere Zielsysteme in einem Bericht.** Der Läufer im
+Prüfpaket kann jetzt Berichte von mehreren Computern zu einem **Gesamtbericht**
+zusammenführen:
+
+```powershell
+.\Start-Pruefung.ps1 -Zusammenfuehren C:\Berichte -Oeffnen
+```
+
+Oben steht eine Übersicht mit einer Zeile je Prüfung und einer Spalte je Computer, jede Zelle
+verlinkt auf die Einzelheiten. Darunter folgen die Berichte je Computer. Was OK ist, ist
+zugeklappt, Auffälliges steht offen.
+
+| | Vorher | Nachher |
+|---|---|---|
+| Zwanzig Server geprüft | zwanzig HTML-Dateien einzeln öffnen | ein Gesamtbericht |
+| Voraussetzung | – | keine, auch kein WinRM |
+| Derselbe Server zweimal geprüft | beide Dateien liegen nebeneinander | der neueste Lauf gilt |
+| Läufer getestet | nur von Hand | `paketlaeufer-pruefen.ps1`, 19 Prüfungen, in der CI |
+
+### Entscheidungen
+
+**Zusammenführen statt verteilen.** Die Frage aus der letzten Notiz war, ob der Läufer per
+`Invoke-Command` auf die Zielsysteme verteilt wird oder ob Einzelberichte hinterher
+zusammenkommen. Das Zweite braucht kein WinRM, keine Anmeldedaten im Läufer und passt zum
+bisherigen Ablauf: Das Paket wird dort von Hand gestartet, wo es laufen soll.
+
+**Die Daten stehen im Bericht selbst.** Jeder Bericht trägt seine Ergebnisse zusätzlich als
+JSON in einem `<script type="application/json">`-Block. Man sammelt nur die HTML-Dateien ein,
+die man ohnehin hat. Eine zweite Datei daneben ginge auf dem Weg vom Server zurück zu leicht
+verloren.
+
+**Je Computer gilt der neueste Lauf.** Damit lässt sich ein früherer Gesamtbericht mit neuen
+Einzelberichten in denselben Ordner legen und auffrischen, ohne dass Server doppelt erscheinen.
+Wie viele Läufe ersetzt wurden, steht im Kopf des Berichts.
+
+**Zusammenführen prüft nichts.** Der Modus ist ein eigener Parametersatz. Er liest nur und
+startet keines der Skripte im Paket. Dateien im Ordner, die kein AdminWerk-Bericht sind,
+werden übersprungen und in der Konsole genannt.
+
+**Der Test läuft mit einem künstlichen Paket.** Drei Skripte mit festem Ergebnis: eines läuft
+durch, eines meldet über den Exitcode einen Befund, eines wirft. Die Katalogskripte bleiben
+außen vor, weil ihr Ergebnis vom Rechner abhängt. Verschiedene Computer entstehen, indem
+`COMPUTERNAME` für den Kindprozess überschrieben wird.
+
+### Geprüft
+
+* `tools/paketlaeufer-pruefen.ps1` unter **Windows PowerShell 5.1**: 19 von 19. Geprüft wird
+  der Einzelbericht, der eingebettete Datenblock, der Umlaut im Paketnamen, das Zusammenführen
+  mit fremder Datei im Ordner, der Vorrang des neueren Laufs und das Ergänzen eines
+  Gesamtberichts. Ein Ordner ohne Berichte endet mit Exitcode 1.
+* `katalog-pruefen.ps1` prüft jetzt auch den Läufer unter `Vorlagen` auf 5.1-Syntax und
+  findet nichts.
+* PSScriptAnalyzer über Skripte, Vorlagen und Werkzeuge: keine Befunde
+* `dotnet build` in `Release` mit `-warnaserror`: 0 Warnungen, 0 Fehler
+* Der Läufer ist weiterhin reines ASCII.
+* Nicht geprüft: den neuen Abschnitt „Mehrere Computer“ im LIESMICH habe ich nur gebaut, aber
+  in keinem echt erzeugten Paket angesehen. Die Oberflächentests liefen heute nicht, weil sie
+  diesen Teil nicht berühren.
+
+### Aufgefallen
+
+* **`ConvertTo-Json` schreibt ein `DateTime` unter 5.1 als `"\/Date(...)\/"`.** Beim
+  Zusammenführen wird nach dem Zeitpunkt sortiert. Er steht deshalb als Zeichenkette
+  `yyyy-MM-dd HH:mm:ss` im Bericht, die sich auch als Text richtig sortiert.
+* **Ein `</script>` in einer Skriptausgabe bricht den Datenblock nicht auf.** `ConvertTo-Json`
+  maskiert `<` und `>` als `\u003c` und `\u003e`. Der Test legt es trotzdem absichtlich
+  darauf an und zählt die schließenden Tags.
+* **Ein absichtlicher Fehler im Kindprozess bricht unter 5.1 den Test ab.** Der Läufer meldet
+  ihn über stderr, und mit `$ErrorActionPreference = 'Stop'` macht 5.1 daraus einen Abbruch
+  im Aufrufer. Beim Aufruf des Läufers gilt deshalb `Continue`, denn gefragt ist nur der
+  Exitcode.
+* Die Zeitstempel sind sekundengenau. Damit der „neuere“ Lauf im Test auch wirklich neuer
+  ist, wartet der Test zwischen den Läufen gut eine Sekunde.
+
+### Als Nächstes
+
+* [x] ~~Prüfpakete: mehrere Zielsysteme in einem Bericht~~
+* [ ] Den LIESMICH-Abschnitt „Mehrere Computer“ in einem echt erzeugten Paket ansehen
+* [ ] Suchfeld über `Strg+F` erreichbar machen, Tastaturbedienung insgesamt schärfen
+* [ ] Katalog um weitere Bereiche erweitern: Drucker, Hyper-V, Zertifikate, Exchange
+* [ ] Überlegen, ob rein lesende Skripte ihren Bericht in der Anwendung anzeigen dürfen.
+      `catalog.json` bräuchte dafür ein Feld, das die CI gegenprüft
+* [ ] Oberflächentests weiter beobachten. Flattern sie trotz der Wartezeit, zuerst ins
+      Protokoll von „Sitzung beschreiben“ sehen
+
+---
+
 ## Tag 4 — 29.09.2026
 
 ### Ergebnis
