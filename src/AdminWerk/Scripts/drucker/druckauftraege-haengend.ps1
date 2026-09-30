@@ -82,6 +82,7 @@ if ($SpoolerNeustarten -and -not $Anwenden) {
 
 $grenze = (Get-Date).AddMinutes(-$AlterMinuten)
 $uebrig = 0
+$nichtErreicht = 0
 
 foreach ($computer in $Computername) {
     Write-Host "`n=== Druckauftraege: $computer ===" -ForegroundColor Cyan
@@ -160,6 +161,7 @@ foreach ($computer in $Computername) {
     }
     catch {
         Write-Warning "$computer : $($_.Exception.Message)"
+        $nichtErreicht++
     }
     finally {
         if ($sitzung) { Remove-CimSession -CimSession $sitzung }
@@ -170,6 +172,10 @@ if (-not $Anwenden -and $uebrig -gt 0) {
     Write-Host "`nTESTLAUF - es wurde nichts entfernt. Zum Entfernen mit -Anwenden ausfuehren." -ForegroundColor Yellow
 }
 
-if ($uebrig -gt 0) {
+if ($nichtErreicht -gt 0) {
+    Write-Warning ("{0} Computer konnte(n) nicht abgefragt werden." -f $nichtErreicht)
+}
+
+if ($uebrig -gt 0 -or $nichtErreicht -gt 0) {
     exit 1
 }

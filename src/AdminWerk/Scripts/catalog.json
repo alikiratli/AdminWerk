@@ -19,6 +19,12 @@
       "beschreibung": "Druckerbestand, hängende Aufträge, Treiber und Point-and-Print."
     },
     {
+      "id": "hyperv",
+      "name": "Hyper-V",
+      "symbol": "▦",
+      "beschreibung": "Virtuelle Maschinen, Prüfpunkte und Auslastung der Hyper-V-Hosts."
+    },
+    {
       "id": "konten",
       "name": "Konten",
       "symbol": "◍",
@@ -486,6 +492,54 @@
       "adminRechte": false,
       "veraendert": false,
       "voraussetzung": "Windows 10/11, Server 2016+"
+    },
+    {
+      "id": "hv-vm-bestand",
+      "kategorie": "hyperv",
+      "titel": "Virtuelle Maschinen: Bestand und Zustand",
+      "beschreibung": "Alle VMs je Host mit Zustand, Generation, Konfigurationsversion, vCPU, Arbeitsspeicher, Laufzeit, Takt, Replikation und Prüfpunkten. Meldet kritische und angehaltene VMs, Taktfehler und gestörte Replikation.",
+      "datei": "hyperv/hyperv-vm-bestand.ps1",
+      "tags": [
+        "Hyper-V",
+        "Inventar",
+        "Mehrere Systeme",
+        "Replikation"
+      ],
+      "adminRechte": true,
+      "veraendert": false,
+      "voraussetzung": "Modul Hyper-V, Hyper-V-Administrator; für andere Hosts WinRM"
+    },
+    {
+      "id": "hv-pruefpunkte",
+      "kategorie": "hyperv",
+      "titel": "Alte Prüfpunkte und verwaiste .avhdx finden",
+      "beschreibung": "Listet Prüfpunkte mit Alter und Größe der differenzierenden Datenträger. Meldet vergessene Prüfpunkte und VMs, die nach einer misslungenen Zusammenführung auf einer .avhdx ohne Prüfpunkt laufen.",
+      "datei": "hyperv/hyperv-pruefpunkte.ps1",
+      "tags": [
+        "Hyper-V",
+        "Prüfpunkte",
+        "Speicherplatz",
+        "Aufräumen"
+      ],
+      "adminRechte": true,
+      "veraendert": false,
+      "voraussetzung": "Modul Hyper-V, Hyper-V-Administrator; für andere Hosts WinRM"
+    },
+    {
+      "id": "hv-host-kapazitaet",
+      "kategorie": "hyperv",
+      "titel": "Hyper-V-Host: Auslastung und Überbuchung",
+      "beschreibung": "vCPU-Verhältnis, zugewiesener und freier Arbeitsspeicher, Platz auf den Laufwerken mit VM-Dateien und virtuelle Switches. Prüft auch, ob der Startspeicher aller Autostart-VMs nach einem Neustart in den Host passt.",
+      "datei": "hyperv/hyperv-host-kapazitaet.ps1",
+      "tags": [
+        "Hyper-V",
+        "Kapazität",
+        "Arbeitsspeicher",
+        "Mehrere Systeme"
+      ],
+      "adminRechte": true,
+      "veraendert": false,
+      "voraussetzung": "Modul Hyper-V, Hyper-V-Administrator; für andere Hosts WinRM"
     },
     {
       "id": "kon-ad-benutzer-anlegen",

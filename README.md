@@ -42,7 +42,7 @@ der Aufruf nicht erst mittendrin an einer fehlenden Berechtigung.
 
 | Funktion | Beschreibung |
 |---|---|
-| **Kategorien** | System, Netzwerk, Drucker, Konten und Security als eigene Bereiche, dazu eine Gesamtansicht |
+| **Kategorien** | System, Netzwerk, Drucker, Hyper-V, Konten und Security als eigene Bereiche, dazu eine Gesamtansicht |
 | **Favoriten** | Häufig gebrauchte Skripte mit dem Stern markieren (oder `Strg+D`) und über den eigenen Reiter „Favoriten“ wiederfinden |
 | **Volltextsuche** | Durchsucht Titel, Beschreibung, Schlagwörter **und** den Skriptinhalt |
 | **Syntaxhervorhebung** | PowerShell-Quelltext farblich aufbereitet (Kommentare, Cmdlets, Variablen, Parameter) |
@@ -61,7 +61,7 @@ sowohl einen Neustart der Anwendung als auch eine Erweiterung des Skriptkatalogs
 
 ## Skriptkatalog
 
-Aktuell **54 Skripte** in fünf Bereichen.
+Aktuell **57 Skripte** in sechs Bereichen.
 
 ### ▣ System (16)
 
@@ -110,6 +110,18 @@ ist dafür nicht nötig. Das Skript für hängende Aufträge entfernt erst mit `
 | **Drucker, Treiber und Anschlüsse** | Zustand, Treiber, TCP/IP-Adresse, SNMP und Freigabe je Computer, optional mit Anschlusstest |
 | **Hängende Druckaufträge finden und entfernen** | Aufträge über einer Altersgrenze, auf Wunsch mit Neustart der Warteschlange |
 | **Druckertreiber und Point-and-Print-Härtung** | Ungenutzte Treiber, PrintNightmare-Richtlinien, Spooler auf Domänencontrollern |
+
+### ▦ Hyper-V (3)
+
+Alle drei lesen nur. Die Cmdlets werden mit dem Modulnamen aufgerufen (`Hyper-V\Get-VM`),
+weil VMware PowerCLI ein gleichnamiges `Get-VM` mitbringt. Andere Hosts spricht das
+Hyper-V-Modul über WinRM an.
+
+| Skript | Zweck |
+|---|---|
+| **Virtuelle Maschinen: Bestand und Zustand** | Zustand, Version, vCPU, Speicher, Takt, Replikation und Prüfpunkte je Host |
+| **Alte Prüfpunkte und verwaiste .avhdx finden** | Vergessene Prüfpunkte, Größe der Differenzkette, `.avhdx` ohne Prüfpunkt |
+| **Hyper-V-Host: Auslastung und Überbuchung** | vCPU-Verhältnis, Speicher, Platz für VM-Dateien, Switches; passt der Autostart in den Host? |
 
 ### ◍ Konten (11)
 
@@ -214,7 +226,7 @@ Die Schaltfläche **Skriptordner** öffnet das Verzeichnis direkt im Explorer.
 
 ## Parameter-Assistent
 
-45 der 54 Skripte haben Parameter — zusammen 135. Wer das Skript nur kopiert, muss den
+48 der 57 Skripte haben Parameter — zusammen 143. Wer das Skript nur kopiert, muss den
 Aufruf von Hand zusammensetzen und dafür erst den `param()`-Block lesen. Der Assistent
 nimmt das ab: unter der Detailansicht steht **Parameter (n)**, aufgeklappt erscheint je
 Parameter eine Zeile.
@@ -284,7 +296,7 @@ auch alles, was über `Write-Host` geht. Der Bericht hält je Prüfung fest, ob 
 durchging (`OK`, `HINWEIS`, `FEHLER`), wie lange er dauerte und was dabei herauskam.
 Fällt ein Skript um, laufen die übrigen weiter.
 
-**Ein Prüfpaket verändert nichts.** Von den 54 Skripten können 6 etwas am System ändern.
+**Ein Prüfpaket verändert nichts.** Von den 57 Skripten können 6 etwas am System ändern.
 Vier davon sind ohne `-Anwenden` ohnehin ein Testlauf; zwei — Dienste starten,
 Systemdateien reparieren — ändern ohne Zutun und sind erst mit `-NurPruefen` zahm. Welcher
 Schalter ein Skript zähmt, steht im Katalog als `sichererSchalter`, und der Läufer setzt
@@ -415,6 +427,7 @@ AdminWerk/
         ├── system/
         ├── netzwerk/
         ├── drucker/
+        ├── hyperv/
         ├── konten/
         └── security/
 ```

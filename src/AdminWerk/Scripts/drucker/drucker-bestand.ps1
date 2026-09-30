@@ -89,6 +89,7 @@ Write-Host "Frage $(@($Computername).Count) Computer ab ..." -ForegroundColor Cy
 
 $zeilen = New-Object System.Collections.Generic.List[object]
 $portGeprueft = @{}
+$nichtErreicht = 0
 
 foreach ($computer in $Computername) {
     $sitzung = $null
@@ -106,6 +107,7 @@ foreach ($computer in $Computername) {
     }
     catch {
         Write-Warning "$computer : $($_.Exception.Message)"
+        $nichtErreicht++
         continue
     }
     finally {
@@ -216,5 +218,13 @@ if ($CsvPfad) {
 
 if ($auffaellig.Count -gt 0) {
     Write-Warning ("{0} Drucker offline oder mit Fehler." -f $auffaellig.Count)
+}
+
+# Ein Computer, der nicht abgefragt werden konnte, ist kein "alles in Ordnung".
+if ($nichtErreicht -gt 0) {
+    Write-Warning ("{0} Computer konnte(n) nicht abgefragt werden." -f $nichtErreicht)
+}
+
+if ($auffaellig.Count -gt 0 -or $nichtErreicht -gt 0) {
     exit 1
 }

@@ -190,7 +190,7 @@ function Parameterkopf {
     AlleVomTyp $Knopf | Where-Object { $_.Current.Name -match '^Parameter \(\d+\)$' } | Select-Object -First 1
 }
 
-$kategorien = @('Alle Skripte', 'Favoriten', 'System', 'Netzwerk', 'Drucker', 'Konten', 'Security')
+$kategorien = @('Alle Skripte', 'Favoriten', 'System', 'Netzwerk', 'Drucker', 'Hyper-V', 'Konten', 'Security')
 
 # ============================================================================
 Write-Host ''
@@ -225,7 +225,7 @@ Waehle (Suche 'Alle Skripte' $Eintrag)
 
 Pruefe 'Die Gesamtansicht zeigt alle Skripte' {
     $summe = 0
-    foreach ($k in 'System', 'Netzwerk', 'Drucker', 'Konten', 'Security') {
+    foreach ($k in 'System', 'Netzwerk', 'Drucker', 'Hyper-V', 'Konten', 'Security') {
         $summe += [int]($zaehler[$k] -replace '\D', '')
     }
     $summe -eq [int]($zaehler['Alle Skripte'] -replace '\D', '')
