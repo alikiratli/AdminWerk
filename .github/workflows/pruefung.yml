@@ -40,6 +40,10 @@ jobs:
         shell: powershell
         run: .\tools\katalog-pruefen.ps1
 
+      - name: Paketlaeufer (Einzelbericht und Zusammenfuehren)
+        shell: powershell
+        run: .\tools\paketlaeufer-pruefen.ps1
+
       - name: PSScriptAnalyzer einrichten
         shell: powershell
         run: |

@@ -345,6 +345,19 @@ public sealed class PaketDienst
         text.AppendLine("Get-ChildItem -Recurse | Unblock-File");
         text.AppendLine("```");
         text.AppendLine();
+        text.AppendLine("## Mehrere Computer");
+        text.AppendLine();
+        text.AppendLine("Das Paket auf jedem Computer starten und die Berichte in einem Ordner");
+        text.AppendLine("sammeln. Daraus wird ein Gesamtbericht mit einer Übersicht Prüfung mal");
+        text.AppendLine("Computer:");
+        text.AppendLine();
+        text.AppendLine("```powershell");
+        text.AppendLine(".\\Start-Pruefung.ps1 -Zusammenfuehren C:\\Berichte -Oeffnen");
+        text.AppendLine("```");
+        text.AppendLine();
+        text.AppendLine("Dabei wird nichts geprüft, nur gelesen. Gibt es von einem Computer mehrere");
+        text.AppendLine("Läufe, gilt der neueste; auch ein früherer Gesamtbericht darf im Ordner liegen.");
+        text.AppendLine();
 
         var brauchtAdmin = paket.Skripte.Count(s => s.AdminRechte);
         if (brauchtAdmin > 0)

@@ -4,9 +4,10 @@
 .DESCRIPTION
     Drei Pruefungen in einem Durchlauf:
 
-      1. Syntax  - jede .ps1 wird mit dem PowerShell-Parser eingelesen. Laeuft das
-                   Skript unter Windows PowerShell 5.1, ist das zugleich der
-                   Kompatibilitaetstest: 7er-Syntax faellt hier durch.
+      1. Syntax  - jede .ps1 (auch der Paketlaeufer unter Vorlagen) wird mit dem
+                   PowerShell-Parser eingelesen. Laeuft das Skript unter Windows
+                   PowerShell 5.1, ist das zugleich der Kompatibilitaetstest:
+                   7er-Syntax faellt hier durch.
       2. Abgleich - jeder Katalogeintrag zeigt auf eine vorhandene Datei, und jede
                    Datei auf der Platte ist im Katalog verzeichnet.
       3. Angaben - Pflichtfelder gefuellt, Bezeichner eindeutig, Kategorie bekannt,
@@ -61,7 +62,16 @@ $musterOperatoren = @(
     'split', 'isplit', 'csplit')
 
 $dateien = Get-ChildItem -Path $Skriptverzeichnis -Filter '*.ps1' -Recurse -File
-foreach ($datei in $dateien) {
+
+# Der Paketlaeufer liegt nicht im Katalog, laeuft aber auf denselben Servern unter
+# derselben 5.1 - also dieselbe Syntaxpruefung. Beim Abgleich (2.) bleibt er aussen vor.
+$vorlagen = @()
+$vorlagenVerzeichnis = Join-Path (Split-Path -Parent $Skriptverzeichnis) 'Vorlagen'
+if (Test-Path -Path $vorlagenVerzeichnis) {
+    $vorlagen = @(Get-ChildItem -Path $vorlagenVerzeichnis -Filter '*.ps1' -Recurse -File)
+}
+
+foreach ($datei in @($dateien) + $vorlagen) {
     $marken = $null
     $fehler = $null
     $baum = [System.Management.Automation.Language.Parser]::ParseFile(
@@ -114,7 +124,8 @@ foreach ($datei in $dateien) {
         }
     }
 }
-Write-Host ("[1/3] Syntax      - {0} Skripte geparst und auf 5.1-Tauglichkeit geprueft" -f $dateien.Count)
+Write-Host ("[1/3] Syntax      - {0} Skripte und {1} Vorlage(n) geparst und auf 5.1-Tauglichkeit geprueft" -f `
+    $dateien.Count, $vorlagen.Count)
 
 # -------------------------------------------------------------- 2. Abgleich
 $katalog = Get-Content -Path $katalogPfad -Raw -Encoding UTF8 | ConvertFrom-Json
