@@ -64,9 +64,11 @@ außen vor, weil ihr Ergebnis vom Rechner abhängt. Verschiedene Computer entste
 * PSScriptAnalyzer über Skripte, Vorlagen und Werkzeuge: keine Befunde
 * `dotnet build` in `Release` mit `-warnaserror`: 0 Warnungen, 0 Fehler
 * Der Läufer ist weiterhin reines ASCII.
+* In der CI ist der Lauf in allen drei Jobs grün. Der neue Schritt für den Läufertest kommt
+  dort ebenfalls auf 19 von 19, die Oberflächentests auf 52 von 52. Örtlich liefen sie heute
+  nicht, weil sie diesen Teil nicht berühren.
 * Nicht geprüft: den neuen Abschnitt „Mehrere Computer“ im LIESMICH habe ich nur gebaut, aber
-  in keinem echt erzeugten Paket angesehen. Die Oberflächentests liefen heute nicht, weil sie
-  diesen Teil nicht berühren.
+  in keinem echt erzeugten Paket angesehen.
 
 ### Aufgefallen
 
@@ -91,8 +93,8 @@ außen vor, weil ihr Ergebnis vom Rechner abhängt. Verschiedene Computer entste
 * [ ] Katalog um weitere Bereiche erweitern: Drucker, Hyper-V, Zertifikate, Exchange
 * [ ] Überlegen, ob rein lesende Skripte ihren Bericht in der Anwendung anzeigen dürfen.
       `catalog.json` bräuchte dafür ein Feld, das die CI gegenprüft
-* [ ] Oberflächentests weiter beobachten. Flattern sie trotz der Wartezeit, zuerst ins
-      Protokoll von „Sitzung beschreiben“ sehen
+* [ ] Oberflächentests weiter beobachten. Seit der Wartezeit bis zum Fenster dreimal grün.
+      Flattern sie doch, zuerst ins Protokoll von „Sitzung beschreiben“ sehen
 
 ---
 
