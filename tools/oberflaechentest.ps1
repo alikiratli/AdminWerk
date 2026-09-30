@@ -2,7 +2,8 @@
 .SYNOPSIS
     Bedient die Anwendung ueber die UI-Automation und prueft die Oberflaeche.
 .DESCRIPTION
-    Startet AdminWerk und klickt sich durch: Kategorien, Suche, Parameterassistent
+    Startet AdminWerk und klickt sich durch: Kategorien, Suche (auch per Tastatur:
+    Strg+F, Eingabe, Esc), Parameterassistent
     (Textfeld, Zahl, Schalter, Auswahlliste), Zwischenablage, Favoriten,
     "In PowerShell oeffnen" und Pruefpakete (als ZIP speichern, wieder oeffnen).
     Jeder Schritt meldet OK oder FEHLER, am Ende steht eine Bilanz.
@@ -244,6 +245,53 @@ Start-Sleep -Milliseconds 800
 Pruefe 'Eine leere Trefferliste zeigt einen Hinweis' {
     $null -ne (AlleVomTyp $Text | Where-Object { $_.Current.Name -match 'Keine Skripte gefunden' })
 }
+
+# Tastatur. Anders als bei den Dateidialogen geht es hier nicht ohne echte Tasten:
+# Strg+F soll gerade von woanders her ins Suchfeld fuehren. SetFocus ueber UIA holt
+# das Fenster dabei in den Vordergrund, SendKeys schickt dann dorthin.
+Add-Type -AssemblyName System.Windows.Forms
+
+function Fokus {
+    [System.Windows.Automation.AutomationElement]::FocusedElement
+}
+
+function Tippe {
+    param([string]$Tasten)
+    [System.Windows.Forms.SendKeys]::SendWait($Tasten)
+    Start-Sleep -Milliseconds 700
+}
+
+$suchfeld = Suche 'Skripte durchsuchen' $Edit
+Setze $suchfeld ''
+Start-Sleep -Milliseconds 500
+(AlleVomTyp $Eintrag | Where-Object { $_.Current.Name -notin $kategorien } | Select-Object -First 1).SetFocus()
+Start-Sleep -Milliseconds 500
+
+Tippe '^f'
+$f = Fokus
+Pruefe 'Strg+F fuehrt aus der Liste ins Suchfeld' { $f.Current.Name -eq 'Skripte durchsuchen' } $f.Current.Name
+
+# Der bisherige Begriff ist markiert und wird durch das Tippen ersetzt.
+Setze $suchfeld 'alt'
+(AlleVomTyp $Eintrag | Where-Object { $_.Current.Name -notin $kategorien } | Select-Object -First 1).SetFocus()
+Start-Sleep -Milliseconds 300
+Tippe '^f'
+Tippe 'BitLocker'
+Pruefe 'Der alte Begriff wird ueberschrieben' { (Wert $suchfeld) -eq 'BitLocker' } (Wert $suchfeld)
+
+Tippe '{ENTER}'
+$f = Fokus
+Pruefe 'Eingabe fuehrt auf den ersten Treffer' {
+    $f.Current.ControlType -eq $Eintrag -and $f.Current.Name -match 'BitLocker'
+} $f.Current.Name
+
+Tippe '^f'
+Tippe '{ESC}'
+Start-Sleep -Milliseconds 400
+Pruefe 'Esc leert das Suchfeld' { (Wert $suchfeld) -eq '' } (Wert $suchfeld)
+Pruefe 'Nach Esc zeigt die Liste wieder alles' {
+    $null -ne (AlleVomTyp $Text | Where-Object { $_.Current.Name -eq $zaehler['Alle Skripte'] })
+} $zaehler['Alle Skripte']
 
 # ============================================================================
 Write-Host ''

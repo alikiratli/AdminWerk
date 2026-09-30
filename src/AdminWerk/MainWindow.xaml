@@ -25,6 +25,11 @@
         <KeyBinding Key="D" Modifiers="Control" Command="{Binding FavoritUmschaltenBefehl}" />
     </Window.InputBindings>
 
+    <!-- Strg+F ist die Standardgeste von ApplicationCommands.Find. -->
+    <Window.CommandBindings>
+        <CommandBinding Command="Find" Executed="SuchfeldAnsteuern" />
+    </Window.CommandBindings>
+
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -55,10 +60,17 @@
 
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                     <Grid Width="300" Margin="0,0,10,0">
-                        <TextBox Style="{StaticResource Suchfeld}"
+                        <TextBox x:Name="Suchfeld"
+                                 Style="{StaticResource Suchfeld}"
                                  AutomationProperties.Name="Skripte durchsuchen"
-                                 Text="{Binding Suchbegriff, UpdateSourceTrigger=PropertyChanged, Delay=120}" />
-                        <TextBlock Text="Skripte durchsuchen …"
+                                 AutomationProperties.AcceleratorKey="Strg+F"
+                                 PreviewKeyDown="Suchfeld_PreviewKeyDown"
+                                 Text="{Binding Suchbegriff, UpdateSourceTrigger=PropertyChanged, Delay=120}">
+                            <TextBox.InputBindings>
+                                <KeyBinding Key="Escape" Command="{Binding SucheLeerenBefehl}" />
+                            </TextBox.InputBindings>
+                        </TextBox>
+                        <TextBlock Text="Skripte durchsuchen …   Strg+F"
                                    Margin="12,0,0,0"
                                    VerticalAlignment="Center"
                                    IsHitTestVisible="False"
@@ -150,7 +162,8 @@
                            Foreground="{StaticResource Text.Gedaempft}"
                            Visibility="{Binding KeineTreffer, Converter={StaticResource BoolZuSichtbarkeit}}" />
 
-                <ListBox Style="{StaticResource Skriptliste}"
+                <ListBox x:Name="Skriptliste"
+                         Style="{StaticResource Skriptliste}"
                          AutomationProperties.Name="Skripte der gewaehlten Kategorie"
                          ItemsSource="{Binding GefilterteSkripte}"
                          SelectedItem="{Binding AusgewaehltesSkript}">
